@@ -1,0 +1,30 @@
+.reveal section h1, h2 {
+  font-size: 1em;
+  font-weight: bold;
+}
+.reveal section h3, h4, h5, h6 {
+  font-size: .8em;
+}
+
+.reveal section p {
+  font-size: .7em; 
+  text-align: left;
+}
+
+.reveal ul li{
+ font-size: .7em;
+ text-align: left;
+}
+
+.reveal .scrollable {
+overflow-y: auto !important;
+overflow-x: hidden !important;
+height: 700px;
+}
+
+a:link {
+  color: #79A4BF;
+}
+a:visited {
+  color: #79A4BF;
+}
