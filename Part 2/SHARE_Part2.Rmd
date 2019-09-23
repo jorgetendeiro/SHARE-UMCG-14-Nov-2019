@@ -59,7 +59,7 @@ Inspired by the `vcdExtra' example with these data, I decided to fit the followi
 $$
 \DeclareMathOperator{\logit}{logit}
 \begin{align}
-\logit(p)=\alpha + \beta_1\text{age} + \beta_2\text{cancer} + \beta_3\text{admit} + \beta_4\text{uncons}.
+\logit(P(\text{died}=1))=\alpha + \beta_1\text{age} + \beta_2\text{cancer} + \beta_3\text{admit} + \beta_4\text{uncons}.
 \end{align}
 $$
 
