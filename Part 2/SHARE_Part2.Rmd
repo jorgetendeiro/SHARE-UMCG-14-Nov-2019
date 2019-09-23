@@ -73,6 +73,8 @@ icu.freq <- glm(died   ~ age + cancer  + admit + uncons,
 summary(icu.freq)
 ```
 
+## Bayesian
+
 
 
 
