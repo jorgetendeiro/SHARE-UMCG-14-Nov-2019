@@ -1,0 +1,83 @@
+---
+title:    "Bayesian statistics as a therapy for frequentist problems"
+subtitle: "Part 2: Bayes in action"
+author:   "Jorge N. Tendeiro"
+date:     "November 14, 2019<br><br> [https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019](https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019)"
+header-includes:
+  - \usepackage{amsmath}
+output:   
+  bookdown::html_document2:
+    toc: true
+    toc_float:
+      collapsed: false
+    toc_depth: 2
+    fig_caption: true
+    number_sections: true
+    theme: cosmo        
+    highlight: kate
+    df_print: kable
+    code_folding: show
+  pdf_document:
+    toc: yes
+bibliography: ../references.bib
+csl: ../style/apa-old-doi-prefix.csl
+---
+
+<br><br>
+
+# Set up
+
+I will illustrate how to perform Bayesian estimation with a simple example. To make the contrast with the frequentist analysis clearer, I will fit the same model in the classic way too. This way, we can better compare the two paradigms. R will be the statistical software used.
+
+The empirical data are a sample from the classical `Intensive Care Unit' (ICU) data set [@hosmer2013; @lemeshow1988a]. This sample is freely available from the [vcdExtra](https://cran.r-project.org/web/packages/vcdExtra/index.html) R package [@friendly2017a]. I will be fitting a logistic regression model which tries to predict the survival of patients following admission to a ICU.
+
+In order to fit Bayesian logistic regression, I decided to use the [rstanarm](https://cran.r-project.org/web/packages/rstanarm/index.html) R package [@gabry2018]. This package offers a front-end to Stan ([https://mc-stan.org](https://mc-stan.org)) and is relatively easy to use.
+
+For the Bayesian analysis below, I drew inspiration from a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html)).
+
+
+
+
+# The data
+
+```{r message=FALSE}
+library(vcdExtra)
+
+# Load data:
+data(ICU)  # 200 cases, 22 variables
+
+# Look at data:
+  # DV = 'died'.
+  # See ?ICU for details on each variable.
+str(ICU)   
+```
+
+# Fit logistic regression model
+
+Inspired by the `vcdExtra' example with these data, I decided to fit the following model:
+
+$$
+\DeclareMathOperator{\logit}{logit}
+\begin{align}
+\logit(p)=\alpha + \beta_1\text{age} + \beta_2\text{cancer} + \beta_3\text{admit} + \beta_4\text{uncons}.
+\end{align}
+$$
+
+## Frequentist
+
+```{r}
+icu.freq <- glm(died   ~ age + cancer  + admit + uncons, 
+                data   = ICU, 
+                family = binomial)
+
+summary(icu.freq)
+```
+
+
+
+
+
+
+`r if (knitr::is_html_output()) '# References {-}'`
+
+
