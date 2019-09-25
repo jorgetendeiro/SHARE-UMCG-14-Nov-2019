@@ -25,6 +25,8 @@ csl: ../style/apa-old-doi-prefix.csl
 
 <br><br>
 
+
+
 # Set up
 
 I will illustrate how to perform Bayesian estimation with a simple example. To make the contrast with the frequentist analysis clearer, I will fit the same model in the classic way too. This way, we can better compare the two paradigms. R will be the statistical software used.
@@ -35,26 +37,39 @@ In order to fit Bayesian logistic regression, I decided to use the [rstanarm](ht
 
 For the Bayesian analysis below, I drew inspiration from a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html)).
 
+## Prepare environment
+
+```{r results="hide", message=FALSE}
+# Clean up:
+rm(list = ls())
+graphics.off()
+
+# Load libraries (install if needed):
+library(vcdExtra)  # For the ICU data
+library(rstanarm)  # To fit Bayesian models
+library(ggplot2)   # For plotting
+
+# Parallel computing for Stan:
+options(mc.cores = parallel::detectCores())
+```
 
 
 
 # The data
 
 ```{r message=FALSE}
-library(vcdExtra)
-
 # Load data:
 data(ICU)  # 200 cases, 22 variables
 
 # Look at data:
-  # DV = 'died'.
+  # DV = 'died'
   # See ?ICU for details on each variable.
 str(ICU)   
 ```
 
 # Fit logistic regression model
 
-Inspired by the `vcdExtra' example with these data, I decided to fit the following model:
+Inspired by the `vcdExtra' example with these data, I decided to fit the following model for illustratation purposes:
 
 $$
 \DeclareMathOperator{\logit}{logit}
@@ -74,6 +89,126 @@ summary(icu.freq)
 ```
 
 ## Bayesian
+
+```{r}
+icu.bayes <- stan_glm(died   ~ age + cancer  + admit + uncons, 
+                      data   = ICU, 
+                      family = binomial)
+
+summary(icu.bayes, digits = 3)
+
+# Plot posterior distributions:
+plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1) + geom_vline(xintercept = 0)
+
+# Humm, not very clear.
+# Plot 'age' separately (its SE is way smaller than the others):
+plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, 
+     pars = c("(Intercept)", "cancerYes", "admitEmergency", "unconsYes")) + 
+  geom_vline(xintercept = 0)
+
+plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, 
+     pars = c("age")) + 
+  geom_vline(xintercept = 0)
+```
+
+
+# Compare results
+
+## Point estimates
+
+```{r echo=FALSE}
+df.coef <- round(data.frame(summary(icu.freq)$coef[, c("Estimate", "Std. Error")], 
+                      summary(icu.bayes)[1:5, c("mean", "sd")]), 2)
+colnames(df.coef) <- c("B freq", "SE freq",  "B bayes", "SE bayes")
+df.coef
+```
+
+## Interval estimates
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, results='hide'}
+confint           (icu.freq,  level = .95)  # Frequentist 95% **confidence** interval
+posterior_interval(icu.bayes, prob  = .95)  # Bayesian 95% **credible** interval
+```
+
+```{r echo=FALSE}
+freq.CIs  <- confint           (icu.freq,  level = .95)
+bayes.CIs <- posterior_interval(icu.bayes, prob  = .95)
+df.CIs <- round(data.frame(freq.CIs, bayes.CIs), 2)
+colnames(df.CIs) <- c("LB freq", "UB freq",  "LB bayes", "UB bayes")
+df.CIs
+```
+
+<!-- ## Predicted log-odds  -->
+
+<!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, results='hide'} -->
+<!-- predict(icu.freq, type = "link") -->
+<!-- icu.bayes$linear.predictors -->
+<!-- ``` -->
+
+<!-- ```{r echo=FALSE} -->
+<!-- # Freq: -->
+<!-- tmp             <- predict(icu.freq, type = "link", se.fit = TRUE) -->
+<!-- freq.logodds    <- tmp$fit -->
+<!-- freq.logodds.se <- tmp$se.fit -->
+<!-- rm(tmp) -->
+<!-- # Bayes: -->
+<!-- # I miss the SEs, so I compute predictions and SEs them from the stan object directly: -->
+<!-- icu.bayes.stan    <- as.matrix(icu.bayes$stanfit) -->
+<!-- icu.bayes.stan    <- icu.bayes.stan[, 1:5] -->
+<!-- icu.bayes.linpred <- icu.bayes.stan %*% t(cbind(1,  -->
+<!--                                                 ICU[, "age"],  -->
+<!--                                                 as.numeric(ICU[,"cancer"])-1,  -->
+<!--                                                 as.numeric(ICU[,"admit"])-1,  -->
+<!--                                                 as.numeric(ICU[,"uncons"])-1)) -->
+<!-- bayes.logodds    <- colMeans(icu.bayes.linpred) -->
+<!-- # bayes.logodds ~ icu.bayes$linear.predictors, differences are due to random drawing from the posteriors. -->
+<!-- bayes.logodds.se <- apply(icu.bayes.linpred, 2, sd) -->
+
+<!-- plot(freq.logodds[order(freq.logodds)], type = "l", bty = "n", ylim = c(-6.5, 3.5), las = 1, yaxt = "n") -->
+<!-- axis(2, seq(-6, 3, 2), las = 1) -->
+<!-- lines(bayes.logodds[order(freq.logodds)] + bayes.logodds.se[order(freq.logodds)], lwd = .5) -->
+<!-- lines(bayes.logodds[order(freq.logodds)] - bayes.logodds.se[order(freq.logodds)], lwd = .5) -->
+
+
+<!-- lines(bayes.logodds[order(freq.logodds)], type = "l", type = 2) -->
+<!-- ``` -->
+
+
+<!-- ## Predicted probabilities -->
+
+<!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, results='hide'} -->
+<!-- predict(icu.freq, type = "response", se.fit = TRUE) -->
+<!-- icu.bayes$fitted.values -->
+<!-- ``` -->
+
+## Interim conclusions
+
+The numerical estimates look very close...
+
+So, why should we bother using Bayesian statistics?...
+
+
+
+# Posterior predictive distribution
+
+## Classification accuracy
+
+Compare observed $y$ scores (0 = not died; 1 = died) with predicted $y$ scores.
+
+Here we do in-sample prediction (out-of-sample prediction would be ideal).
+
+```{r}
+# Predicted probabilities
+logodds <- posterior_linpred(icu.bayes)
+prob    <- posterior_linpred(icu.bayes, transform = TRUE)
+prob    <- colMeans(prob)
+pred.died      <- as.integer(prob >= 0.5)
+   
+# posterior classification accuracy
+round(mean(xor(pred.died,as.integer(ICU$died=="No"))),2)
+```
+
+
 
 
 
