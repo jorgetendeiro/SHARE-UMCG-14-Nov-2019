@@ -1,4 +1,4 @@
-# From here:
+# From here: 
 # https://cran.r-project.org/web/packages/rstanarm/vignettes/rstanarm.html
 
 library(rstanarm)
