@@ -31,7 +31,7 @@ csl: ../style/apa-old-doi-prefix.csl
 
 I will illustrate how to perform Bayesian estimation with a simple example. To make the contrast with the frequentist analysis clearer, I will fit the same model in the classic way too. This way, we can better compare the two paradigms. R will be the statistical software used.
 
-The empirical data are a sample from the classical `Intensive Care Unit' (ICU) data set [@hosmer2013; @lemeshow1988a]. This sample is freely available from the [vcdExtra](https://cran.r-project.org/web/packages/vcdExtra/index.html) R package [@friendly2017a]. I will be fitting a logistic regression model which tries to predict the survival of patients following admission to a ICU.
+The empirical data are a sample from the classical 'Intensive Care Unit' (ICU) data set [@hosmer2013; @lemeshow1988a]. This sample is freely available from the [vcdExtra](https://cran.r-project.org/web/packages/vcdExtra/index.html) R package [@friendly2017a]. I will be fitting a logistic regression model which tries to predict the survival of adult patients following hospital discharge.
 
 In order to fit Bayesian logistic regression, I decided to use the [rstanarm](https://cran.r-project.org/web/packages/rstanarm/index.html) R package [@gabry2018]. This package offers a front-end to Stan ([https://mc-stan.org](https://mc-stan.org)) and is relatively easy to use.
 
@@ -48,6 +48,7 @@ graphics.off()
 library(vcdExtra)  # For the ICU data
 library(rstanarm)  # To fit Bayesian models
 library(ggplot2)   # For plotting
+library(pROC)      # ROC curve
 
 # Parallel computing for Stan:
 options(mc.cores = parallel::detectCores())
@@ -58,11 +59,11 @@ options(mc.cores = parallel::detectCores())
 # The data
 
 ```{r message=FALSE}
-# Load data:
+# Load data (from the 'vcdExtra' package):
 data(ICU)  # 200 cases, 22 variables
 
 # Look at data:
-  # DV = 'died'
+  # DV = 'died' (0 = No, 1 = Yes)
   # See ?ICU for details on each variable.
 str(ICU)   
 ```
@@ -74,7 +75,7 @@ Inspired by the `vcdExtra' example with these data, I decided to fit the followi
 $$
 \DeclareMathOperator{\logit}{logit}
 \begin{align}
-\logit(P(\text{died}=1))=\alpha + \beta_1\text{age} + \beta_2\text{cancer} + \beta_3\text{admit} + \beta_4\text{uncons}.
+\logit(P(\text{died}=Yes))=\alpha + \beta_1\text{age} + \beta_2\text{cancer} + \beta_3\text{admit} + \beta_4\text{uncons}.
 \end{align}
 $$
 
@@ -87,6 +88,70 @@ icu.freq <- glm(died   ~ age + cancer  + admit + uncons,
 
 summary(icu.freq)
 ```
+
+Plot the estimated probability against the jittered outcome:
+```{r message=FALSE}
+est.prob <- predict(icu.freq, type = c("response"))
+roc.out  <- roc(died ~ est.prob, data = ICU)
+
+died.vec <- as.numeric(ICU$died) - 1 # 0 = No, 1 = Yes
+plot(est.prob, jitter(died.vec, .2), 
+     pch = 21, bg = "gray", bty = "n", 
+     xlab = "", ylab = "", las = 1)
+mtext("Estimated probability", 1, 2)
+mtext("Jittered DV", 2, 2.5)
+```
+
+
+Histograms of the estimated probabilities by outcome value (died = No, died = Yes):
+
+```{r message=FALSE}
+par(mar = c(4, 6.5, 1, 0), xpd = NA)
+layout(matrix(c(1, 2), ncol = 1))
+
+cut <- .3
+h1 <- hist(est.prob[died.vec == 0], plot = FALSE)
+cutoff.bins <- cut(h1$breaks, c(-Inf, cut, Inf))
+plot(h1, col = c("gray", "red")[cutoff.bins], 
+     las = 1, freq = FALSE, main = "Died = No", xlab = "")
+  arrows (cut+.02, 3, .40, 3, length = 0.08, lwd = 2, col = "red")
+text(.5, 3, "1 - Specificity", adj = 0, col = "red")
+
+hist(est.prob[died.vec == 1], freq = FALSE, las = 1, 
+     col = c("gray", "red")[cutoff.bins], main = "Died = Yes", xlab = "")
+arrows (cut+.02, 1.5, .40, 1.5, length = 0.08, lwd = 2, col = "red")
+text(.5, 1.5, "Sensitivity", adj = 0, col = "red")
+mtext("Estimated probability", 1, 2)
+segments(cut, par("usr")[1], cut, 7, lwd = 2, col = "red")
+```
+
+
+
+The ROC curve:
+
+```{r message=FALSE}
+# plot(roc.out)   # Not so nice!...
+
+# A pimped-up ROC plot:
+plot(1-roc.out$specificities, roc.out$sensitivities, 
+     type = "l", lwd = 2, bty = "n", 
+     xlab = "", ylab = "", axes = FALSE, 
+     main = "AUC = .85")
+segments(0, 0, 1, 1, lty = 2, col = "gray")
+axis(1, pos=0)
+mtext("1 - Specificity", 1, 1.5)
+axis(2, pos=0, las = 1)
+mtext("Sensitivity", 2, 1.5)
+abline(v=sensit)
+abline(h=)
+```
+
+
+
+
+
+
+
 
 ## Bayesian
 
@@ -207,6 +272,8 @@ pred.died      <- as.integer(prob >= 0.5)
 # posterior classification accuracy
 round(mean(xor(pred.died,as.integer(ICU$died=="No"))),2)
 ```
+
+
 
 
 

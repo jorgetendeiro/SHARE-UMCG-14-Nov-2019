@@ -52,7 +52,7 @@ knitr::include_graphics('figures/Baker 2016.jpeg')
 <br>
 [Data tampering](https://retractionwatch.com/2017/12/12/psychologist-fire-leaves-university-start-private-practice/).
 <br><br>
-- ...
+- ...o
 
 ## Causes for the crisis?
 
