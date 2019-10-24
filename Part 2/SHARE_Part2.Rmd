@@ -91,6 +91,7 @@ summary(icu.freq)
 
 Plot the estimated probability against the jittered outcome:
 ```{r message=FALSE}
+par(mar = c(4, 6.5, 2, 0))
 est.prob <- predict(icu.freq, type = c("response"))
 roc.out  <- roc(died ~ est.prob, data = ICU)
 
@@ -102,30 +103,54 @@ mtext("Estimated probability", 1, 2)
 mtext("Jittered DV", 2, 2.5)
 ```
 
-
-Histograms of the estimated probabilities by outcome value (died = No, died = Yes):
+Plot sensitivity and specificity at all possible probability cutoff points:
 
 ```{r message=FALSE}
-par(mar = c(4, 6.5, 1, 0), xpd = NA)
+par(mar = c(4, 6.5, 2, 0))
+plot(roc.out$thresholds, roc.out$sensitivities, xlim = c(0, 1), 
+     type = "l", lwd = 2, bty = "n", 
+     xlab = "", ylab = "", axes = FALSE, 
+     main = "")
+lines(roc.out$thresholds, roc.out$specificities, 
+     type = "l", lwd = 2, lty = 2)
+axis(1, pos=0)
+mtext("Probability cutoff", 1, 1.5)
+axis(2, pos=0, las = 1)
+mtext("Sensitivity / Specificity", 2, 1.5)
+abline(v = .2, col = 2, lwd = 2)
+legend(.7, .8, c("Sensitivity" , "Specificity"), lty = 1:2, lwd = 2, seg.len = 3)
+```
+
+So a probability cutoff value of about .2 is the one that optimizes both sensitivity and specificity. For illustration purposes only, we will use this value in what follows.
+
+Here are the histograms of the estimated probabilities by outcome value (died = No, died = Yes):
+
+```{r message=FALSE}
+par(mar = c(4, 6.5, 2, 0), xpd = NA)
 layout(matrix(c(1, 2), ncol = 1))
 
-cut <- .3
+cut      <- .1999
+onemspec <- mean(est.prob[died.vec == 0] > cut)
+sensit   <- mean(est.prob[died.vec == 1] > cut)
+
 h1 <- hist(est.prob[died.vec == 0], plot = FALSE)
-cutoff.bins <- cut(h1$breaks, c(-Inf, cut, Inf))
+cutoff.bins <- cut(h1$breaks, c(-Inf, cut, Inf), right = TRUE)
 plot(h1, col = c("gray", "red")[cutoff.bins], 
-     las = 1, freq = FALSE, main = "Died = No", xlab = "")
-  arrows (cut+.02, 3, .40, 3, length = 0.08, lwd = 2, col = "red")
-text(.5, 3, "1 - Specificity", adj = 0, col = "red")
+     las = 1, freq = FALSE, main = "", xlab = "")
+title("Died = No", adj = 1)
+arrows (cut+.02, 3, .40, 3, length = 0.08, lwd = 2, col = "red")
+text(.5, 3, paste0("1 - Specificity = ", onemspec), adj = 0, col = "red")
 
 hist(est.prob[died.vec == 1], freq = FALSE, las = 1, 
-     col = c("gray", "red")[cutoff.bins], main = "Died = Yes", xlab = "")
-arrows (cut+.02, 1.5, .40, 1.5, length = 0.08, lwd = 2, col = "red")
-text(.5, 1.5, "Sensitivity", adj = 0, col = "red")
+     col = c("gray", "red")[cutoff.bins], main = "", xlab = "")
+title("Died = Yes", adj = 1)
+arrows (cut+.02, 2.2, .40, 2.2, length = 0.08, lwd = 2, col = "red")
+text(.5, 2.2, paste0("Sensitivity = ", sensit), adj = 0, col = "red")
 mtext("Estimated probability", 1, 2)
 segments(cut, par("usr")[1], cut, 7, lwd = 2, col = "red")
 ```
 
-
+The two histograms look different enough: There is hope of building a good classifier. 
 
 The ROC curve:
 
@@ -142,16 +167,12 @@ axis(1, pos=0)
 mtext("1 - Specificity", 1, 1.5)
 axis(2, pos=0, las = 1)
 mtext("Sensitivity", 2, 1.5)
-abline(v=sensit)
-abline(h=)
+segments(onemspec, 0, onemspec, sensit, col = 2)
+segments(0, sensit, onemspec, sensit, col = 2)
+points(onemspec, sensit, pch = 21, bg = 2)
 ```
 
-
-
-
-
-
-
+The AUR is .85, so the predicted probability of non survival after hospital discharge is much larger for the patients who actually did not make it. So the model is working as intended.
 
 ## Bayesian
 
