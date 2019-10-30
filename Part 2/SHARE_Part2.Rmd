@@ -91,32 +91,40 @@ summary(icu.freq)
 
 Plot the estimated probability against the jittered outcome:
 ```{r message=FALSE}
-par(mar = c(4, 6.5, 2, 0))
 est.prob <- predict(icu.freq, type = c("response"))
-roc.out  <- roc(died ~ est.prob, data = ICU)
-
 died.vec <- as.numeric(ICU$died) - 1 # 0 = No, 1 = Yes
-plot(est.prob, jitter(died.vec, .2), 
+
+par(mar = c(4, 6.5, 2.5, 1))
+plot(est.prob, jitter(died.vec, .2), xlim = c(-.02, 1), ylim = c(-.08, 1.05), 
      pch = 21, bg = "gray", bty = "n", 
-     xlab = "", ylab = "", las = 1)
+     xlab = "", ylab = "", xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n")
+# x-axis:
+axis(1, at = c(-.02, 1), labels = c("", ""), lwd.ticks = 0)
+axis(1, at = seq(0, 1, .2), lwd = 0, lwd.ticks = 1)
 mtext("Estimated probability", 1, 2)
+# y-axis:
+axis(2, at = c(-.08, 1.05), labels = c("", ""), lwd.ticks = 0)
+axis(2, at = seq(0, 1, .2), lwd = 0, lwd.ticks = 1, las = 1)
 mtext("Jittered DV", 2, 2.5)
 ```
 
 Plot sensitivity and specificity at all possible probability cutoff points:
 
 ```{r message=FALSE}
-par(mar = c(4, 6.5, 2, 0))
+roc.out  <- roc(died ~ est.prob, data = ICU)
+
+par(mar = c(4, 6.5, 2.5, 1))
 plot(roc.out$thresholds, roc.out$sensitivities, xlim = c(0, 1), 
      type = "l", lwd = 2, bty = "n", 
-     xlab = "", ylab = "", axes = FALSE, 
-     main = "")
-lines(roc.out$thresholds, roc.out$specificities, 
-     type = "l", lwd = 2, lty = 2)
-axis(1, pos=0)
+     xlab = "", ylab = "", axes = FALSE)
+lines(roc.out$thresholds, roc.out$specificities, type = "l", lwd = 2, lty = 2)
+# x-axis:
+axis(1, pos = 0)
 mtext("Probability cutoff", 1, 1.5)
-axis(2, pos=0, las = 1)
+# y-axis:
+axis(2, pos = 0, las = 1)
 mtext("Sensitivity / Specificity", 2, 1.5)
+# 
 abline(v = .2, col = 2, lwd = 2)
 legend(.7, .8, c("Sensitivity" , "Specificity"), lty = 1:2, lwd = 2, seg.len = 3)
 ```
@@ -126,10 +134,10 @@ So a probability cutoff value of about .2 is the one that optimizes both sensiti
 Here are the histograms of the estimated probabilities by outcome value (died = No, died = Yes):
 
 ```{r message=FALSE}
-par(mar = c(4, 6.5, 2, 0), xpd = NA)
+par(mar = c(4, 6.5, 2.5, 1), xpd = NA)
 layout(matrix(c(1, 2), ncol = 1))
 
-cut      <- .1999
+cut      <- .1999 # basically .20
 onemspec <- mean(est.prob[died.vec == 0] > cut)
 sensit   <- mean(est.prob[died.vec == 1] > cut)
 
@@ -158,6 +166,7 @@ The ROC curve:
 # plot(roc.out)   # Not so nice!...
 
 # A pimped-up ROC plot:
+par(mar = c(4, 6.5, 2.5, 1))
 plot(1-roc.out$specificities, roc.out$sensitivities, 
      type = "l", lwd = 2, bty = "n", 
      xlab = "", ylab = "", axes = FALSE, 
@@ -184,14 +193,20 @@ icu.bayes <- stan_glm(died   ~ age + cancer  + admit + uncons,
 summary(icu.bayes, digits = 3)
 
 # Plot posterior distributions:
+par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1) + geom_vline(xintercept = 0)
+```
 
-# Humm, not very clear.
-# Plot 'age' separately (its SE is way smaller than the others):
+Humm, not very clear.
+Let's plot 'age' separately (its SE is way smaller than the others):
+
+```{r}
+par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, 
      pars = c("(Intercept)", "cancerYes", "admitEmergency", "unconsYes")) + 
   geom_vline(xintercept = 0)
 
+par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, 
      pars = c("age")) + 
   geom_vline(xintercept = 0)
@@ -269,11 +284,25 @@ df.CIs
 
 ## Interim conclusions
 
-The numerical estimates look very close...
+The numerical estimates look very close... So, why should we bother using Bayesian statistics?
 
-So, why should we bother using Bayesian statistics?...
+- First of all, the *interpretation* of the results is different. For instance, not that confidence interval $\not=$ credible interval (the latter is *much* more intuitive). 
 
+- Also, we can now answer questions of the type:
 
+    - "What is the probability that the log-odds of predictor X is larger than 1?"
+    
+    - (Add more examples, depending on how the Bayesian sections below develop).
+
+- Bayesian statistics is very flexible (e.g., relatively easy to adapt model, priors, constraints).
+
+- Also, Bayesian modeling allows really cool model assessment. Below we will briefly highlight the following:
+
+    - *Prior predictive distribution*: What type of data does your model of choice predict, *even before you look at your own data*? Is the model sensible to start with?
+    
+    - *Posterior predictive distribution*: How does data generated from the estimated model relate to your observed data? This also works for out-of-sample observed data (it is even preferable).
+    
+    - *Model comparisons*: How to decide between competing models?
 
 # Posterior predictive distribution
 
