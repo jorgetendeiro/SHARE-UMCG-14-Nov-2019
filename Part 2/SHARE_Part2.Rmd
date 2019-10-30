@@ -35,7 +35,11 @@ The empirical data are a sample from the classical 'Intensive Care Unit' (ICU) d
 
 In order to fit Bayesian logistic regression, I decided to use the [rstanarm](https://cran.r-project.org/web/packages/rstanarm/index.html) R package [@gabry2018]. This package offers a front-end to Stan ([https://mc-stan.org](https://mc-stan.org)) and is relatively easy to use.
 
-For the Bayesian analysis below, I drew inspiration from a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html)).
+For the Bayesian analysis below, I drew inspiration from:
+
+- a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html)).
+
+- A blog post by Fabian Dablander ([https://fabiandablander.com/r/Law-of-Practice.html](https://fabiandablander.com/r/Law-of-Practice.html)).
 
 ## Prepare environment
 
