@@ -39,6 +39,8 @@ For the Bayesian analysis below, I drew inspiration from:
 
 - a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html)).
 
+- The plotting tools of the [bayesplot]https://cran.r-project.org/web/packages/bayesplot/index.html) package ([https://mc-stan.org/bayesplot/index.html](https://mc-stan.org/bayesplot/index.html)).
+
 - A blog post by Fabian Dablander ([https://fabiandablander.com/r/Law-of-Practice.html](https://fabiandablander.com/r/Law-of-Practice.html)).
 
 ## Prepare environment
@@ -57,8 +59,6 @@ library(pROC)      # ROC curve
 # Parallel computing for Stan:
 options(mc.cores = parallel::detectCores())
 ```
-
-
 
 # The data
 
@@ -243,48 +243,6 @@ colnames(df.CIs) <- c("LB freq", "UB freq",  "LB bayes", "UB bayes")
 df.CIs
 ```
 
-<!-- ## Predicted log-odds  -->
-
-<!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, results='hide'} -->
-<!-- predict(icu.freq, type = "link") -->
-<!-- icu.bayes$linear.predictors -->
-<!-- ``` -->
-
-<!-- ```{r echo=FALSE} -->
-<!-- # Freq: -->
-<!-- tmp             <- predict(icu.freq, type = "link", se.fit = TRUE) -->
-<!-- freq.logodds    <- tmp$fit -->
-<!-- freq.logodds.se <- tmp$se.fit -->
-<!-- rm(tmp) -->
-<!-- # Bayes: -->
-<!-- # I miss the SEs, so I compute predictions and SEs them from the stan object directly: -->
-<!-- icu.bayes.stan    <- as.matrix(icu.bayes$stanfit) -->
-<!-- icu.bayes.stan    <- icu.bayes.stan[, 1:5] -->
-<!-- icu.bayes.linpred <- icu.bayes.stan %*% t(cbind(1,  -->
-<!--                                                 ICU[, "age"],  -->
-<!--                                                 as.numeric(ICU[,"cancer"])-1,  -->
-<!--                                                 as.numeric(ICU[,"admit"])-1,  -->
-<!--                                                 as.numeric(ICU[,"uncons"])-1)) -->
-<!-- bayes.logodds    <- colMeans(icu.bayes.linpred) -->
-<!-- # bayes.logodds ~ icu.bayes$linear.predictors, differences are due to random drawing from the posteriors. -->
-<!-- bayes.logodds.se <- apply(icu.bayes.linpred, 2, sd) -->
-
-<!-- plot(freq.logodds[order(freq.logodds)], type = "l", bty = "n", ylim = c(-6.5, 3.5), las = 1, yaxt = "n") -->
-<!-- axis(2, seq(-6, 3, 2), las = 1) -->
-<!-- lines(bayes.logodds[order(freq.logodds)] + bayes.logodds.se[order(freq.logodds)], lwd = .5) -->
-<!-- lines(bayes.logodds[order(freq.logodds)] - bayes.logodds.se[order(freq.logodds)], lwd = .5) -->
-
-
-<!-- lines(bayes.logodds[order(freq.logodds)], type = "l", type = 2) -->
-<!-- ``` -->
-
-
-<!-- ## Predicted probabilities -->
-
-<!-- ```{r eval=FALSE, message=FALSE, warning=FALSE, results='hide'} -->
-<!-- predict(icu.freq, type = "response", se.fit = TRUE) -->
-<!-- icu.bayes$fitted.values -->
-<!-- ``` -->
 
 ## Interim conclusions
 
@@ -308,7 +266,71 @@ The numerical estimates look very close... So, why should we bother using Bayesi
     
     - *Model comparisons*: How to decide between competing models?
 
+# Prior predictive distribution
+
+What priors are being used by default in stan_glm()?<br>
+(Btw: You should always strive to set up your own priors.)
+
+```{r}
+prior_summary(icu.bayes)
+```
+
+Humm, are these priors sensible? 
+
+- You can plot them and judge.
+
+- You can see what kind of data is generated from the model (priors and likelihood combined). This is what the *prior predictive distribution* is all about.
+
+So, let's sample data from the prior predictive distribution. That is, we sample from the model *before* estimation (!!).
+
+```{r}
+icu.bayes.priorPD <- stan_glm(died ~ age + cancer + admit + uncons, 
+                      data   = ICU, 
+                      family = binomial, 
+                      prior_PD = TRUE, seed = 678) # draw from prior predictive dist.
+```
+
+As an example, let's see the generated values of $P(\text{died}=Yes)$, based on the model predictors (age, cancer, admit, uncons):
+
+```{r fig.height = 6}
+# Probabilities P(died = Yes):
+priorPD.prob <- posterior_linpred(icu.bayes.priorPD, transform = TRUE, draws = 4)
+
+par(mar = c(4, 6.5, 2.5, 1))
+layout(matrix(1:4, nrow = 2))
+for (i in 1:4)
+{
+  hist(priorPD.prob[i, ], xlim = c(0, 1), freq = FALSE, 
+       col = "gray", bty = "n", las = 1, 
+       xlab = "P(died = Yes)", ylab = "", yaxt = "n", main = "", xaxs = "i", yaxs = "i")
+}
+```
+
+The model is rather flexible. Some flexibility is good, but too much may be ill devised.
+
+If needed, change the model (e.g., different link function, different priors).
+
 # Posterior predictive distribution
+
+How well do data generated from the *estimated* model relate to the observed data?
+
+```{r fig.height = 6}
+pp_check(icu.bayes, "ppc_hist", binwidth = .05)
+```
+
+```{r fig.height = 6}
+pp_check(icu.bayes, plotfun = "ppc_bars")
+```
+
+```{r fig.height = 6}
+pp_check(icu.bayes, plotfun = "ppc_stat", stat = "mean", binwidth = .01)
+```
+
+```{r fig.height = 6}
+pp_check(icu.bayes, plotfun = "ppc_error_hist", nreps = 9, binwidth = .05)
+```
+
+# To look at...
 
 ## Classification accuracy
 
