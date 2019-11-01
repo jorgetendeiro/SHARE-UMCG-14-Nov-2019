@@ -31,17 +31,17 @@ csl: ../style/apa-old-doi-prefix.csl
 
 I will illustrate how to perform Bayesian estimation with a simple example. To make the contrast with the frequentist analysis clearer, I will fit the same model in the classic way too. This way, we can better compare the two paradigms. R will be the statistical software used.
 
-The empirical data are a sample from the classical 'Intensive Care Unit' (ICU) data set [@hosmer2013; @lemeshow1988a]. This sample is freely available from the [vcdExtra](https://cran.r-project.org/web/packages/vcdExtra/index.html) R package [@friendly2017a]. I will be fitting a logistic regression model which tries to predict the survival of adult patients following hospital discharge.
+The empirical data are a sample from the classical 'Intensive Care Unit' (ICU) data set [@hosmer2013; @lemeshow1988a]. This sample is freely available from the [vcdExtra](https://cran.r-project.org/web/packages/vcdExtra/index.html){target="_blank"} R package [@friendly2017a]. I will be fitting a logistic regression model which tries to predict the survival of adult patients following hospital discharge.
 
-In order to fit Bayesian logistic regression, I decided to use the [rstanarm](https://cran.r-project.org/web/packages/rstanarm/index.html) R package [@gabry2018]. This package offers a front-end to Stan ([https://mc-stan.org](https://mc-stan.org)) and is relatively easy to use.
+In order to fit Bayesian logistic regression, I decided to use the [rstanarm](https://cran.r-project.org/web/packages/rstanarm/index.html){target="_blank"} R package [@gabry2018]. This package offers a front-end to Stan ([https://mc-stan.org](https://mc-stan.org){target="_blank"}) and is relatively easy to use.
 
 For the Bayesian analysis below, I drew inspiration from:
 
-- a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html)).
+- a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html){target="_blank"}).
 
-- The plotting tools of the [bayesplot]https://cran.r-project.org/web/packages/bayesplot/index.html) package ([https://mc-stan.org/bayesplot/index.html](https://mc-stan.org/bayesplot/index.html)).
+- The plotting tools of the [bayesplot](https://cran.r-project.org/web/packages/bayesplot/index.html){target="_blank"} package ([https://mc-stan.org/bayesplot/index.html](https://mc-stan.org/bayesplot/index.html){target="_blank"}).
 
-- A blog post by Fabian Dablander ([https://fabiandablander.com/r/Law-of-Practice.html](https://fabiandablander.com/r/Law-of-Practice.html)).
+- A blog post by Fabian Dablander ([https://fabiandablander.com/r/Law-of-Practice.html](https://fabiandablander.com/r/Law-of-Practice.html){target="_blank"}).
 
 ## Prepare environment
 
@@ -51,10 +51,12 @@ rm(list = ls())
 graphics.off()
 
 # Load libraries (install if needed):
-library(vcdExtra)  # For the ICU data
-library(rstanarm)  # To fit Bayesian models
-library(ggplot2)   # For plotting
-library(pROC)      # ROC curve
+library(vcdExtra)       # For the ICU data
+library(rstanarm)       # To fit Bayesian models
+library(ggplot2)        # For plotting
+library(pROC)           # ROC curve
+library(loo)            # Leave-one-out CV
+library(bridgesampling) # To compute BFs from rstanarm's output
 
 # Parallel computing for Stan:
 options(mc.cores = parallel::detectCores())
@@ -67,14 +69,14 @@ options(mc.cores = parallel::detectCores())
 data(ICU)  # 200 cases, 22 variables
 
 # Look at data:
-  # DV = 'died' (0 = No, 1 = Yes)
+  # DV = 'died'
   # See ?ICU for details on each variable.
 str(ICU)   
 ```
 
 # Fit logistic regression model
 
-Inspired by the `vcdExtra' example with these data, I decided to fit the following model for illustratation purposes:
+Inspired by the 'vcdExtra' example with these data, I decided to fit the following model for illustratation purposes:
 
 $$
 \DeclareMathOperator{\logit}{logit}
@@ -83,10 +85,19 @@ $$
 \end{align}
 $$
 
+Later on, to illustrate how model comparison can be performed under the Bayesian framework, I will also consider the baseline model (no predictors):
+
+$$
+\DeclareMathOperator{\logit}{logit}
+\begin{align}
+\logit(P(\text{died}=Yes))=\alpha.
+\end{align}
+$$
+
 ## Frequentist
 
 ```{r}
-icu.freq <- glm(died   ~ age + cancer  + admit + uncons, 
+icu.freq <- glm(died   ~ age + cancer + admit + uncons, 
                 data   = ICU, 
                 family = binomial)
 
@@ -94,13 +105,13 @@ summary(icu.freq)
 ```
 
 Plot the estimated probability against the jittered outcome:
-```{r message=FALSE}
+```{r message=FALSE, fig.height = 6}
 est.prob <- predict(icu.freq, type = c("response"))
 died.vec <- as.numeric(ICU$died) - 1 # 0 = No, 1 = Yes
 
 par(mar = c(4, 6.5, 2.5, 1))
-plot(est.prob, jitter(died.vec, .2), xlim = c(-.02, 1), ylim = c(-.08, 1.05), 
-     pch = 21, bg = "gray", bty = "n", 
+plot(est.prob, jitter(died.vec, .2), 
+     xlim = c(-.02, 1), ylim = c(-.08, 1.05), pch = 21, bg = "gray", bty = "n", 
      xlab = "", ylab = "", xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n")
 # x-axis:
 axis(1, at = c(-.02, 1), labels = c("", ""), lwd.ticks = 0)
@@ -114,7 +125,7 @@ mtext("Jittered DV", 2, 2.5)
 
 Plot sensitivity and specificity at all possible probability cutoff points:
 
-```{r message=FALSE}
+```{r message=FALSE, fig.height = 6}
 roc.out  <- roc(died ~ est.prob, data = ICU)
 
 par(mar = c(4, 6.5, 2.5, 1))
@@ -137,7 +148,7 @@ So a probability cutoff value of about .2 is the one that optimizes both sensiti
 
 Here are the histograms of the estimated probabilities by outcome value (died = No, died = Yes):
 
-```{r message=FALSE}
+```{r message=FALSE, fig.height = 6}
 par(mar = c(4, 6.5, 2.5, 1), xpd = NA)
 layout(matrix(c(1, 2), ncol = 1))
 
@@ -166,7 +177,7 @@ The two histograms look different enough: There is hope of building a good class
 
 The ROC curve:
 
-```{r message=FALSE}
+```{r message=FALSE, fig.height = 6}
 # plot(roc.out)   # Not so nice!...
 
 # A pimped-up ROC plot:
@@ -176,9 +187,9 @@ plot(1-roc.out$specificities, roc.out$sensitivities,
      xlab = "", ylab = "", axes = FALSE, 
      main = "AUC = .85")
 segments(0, 0, 1, 1, lty = 2, col = "gray")
-axis(1, pos=0)
+axis(1, pos = 0)
 mtext("1 - Specificity", 1, 1.5)
-axis(2, pos=0, las = 1)
+axis(2, pos = 0, las = 1)
 mtext("Sensitivity", 2, 1.5)
 segments(onemspec, 0, onemspec, sensit, col = 2)
 segments(0, sensit, onemspec, sensit, col = 2)
@@ -189,30 +200,35 @@ The AUR is .85, so the predicted probability of non survival after hospital disc
 
 ## Bayesian
 
+The rstanarm command that we need looks virtually identical to the frequentist one:
+
+
 ```{r}
-icu.bayes <- stan_glm(died   ~ age + cancer  + admit + uncons, 
+icu.bayes <- stan_glm(died   ~ age + cancer + admit + uncons, 
                       data   = ICU, 
                       family = binomial)
 
 summary(icu.bayes, digits = 3)
+```
 
-# Plot posterior distributions:
+Let's plot the posterior distributions:
+
+```{r fig.height = 6}
 par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1) + geom_vline(xintercept = 0)
 ```
 
-Humm, not very clear.
+Humm, not very clear. <br>
 Let's plot 'age' separately (its SE is way smaller than the others):
 
-```{r}
+```{r fig.height = 6}
 par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, 
      pars = c("(Intercept)", "cancerYes", "admitEmergency", "unconsYes")) + 
   geom_vline(xintercept = 0)
 
 par(mar = c(4, 6.5, 2.5, 1))
-plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, 
-     pars = c("age")) + 
+plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, pars = c("age")) + 
   geom_vline(xintercept = 0)
 ```
 
@@ -235,7 +251,7 @@ confint           (icu.freq,  level = .95)  # Frequentist 95% **confidence** int
 posterior_interval(icu.bayes, prob  = .95)  # Bayesian 95% **credible** interval
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 freq.CIs  <- confint           (icu.freq,  level = .95)
 bayes.CIs <- posterior_interval(icu.bayes, prob  = .95)
 df.CIs <- round(data.frame(freq.CIs, bayes.CIs), 2)
@@ -248,9 +264,9 @@ df.CIs
 
 The numerical estimates look very close... So, why should we bother using Bayesian statistics?
 
-- First of all, the *interpretation* of the results is different. For instance, not that confidence interval $\not=$ credible interval (the latter is *much* more intuitive). 
+- First of all, the *interpretation* of the results is different. For instance, note that confidence interval $\not=$ credible interval (the latter is *much* more intuitive). 
 
-- Also, we can now answer questions of the type:
+- Also, Bayesian statistics allows answering questions of the type:
 
     - "What is the probability that the log-odds of predictor X is larger than 1?"
     
@@ -258,11 +274,11 @@ The numerical estimates look very close... So, why should we bother using Bayesi
 
 - Bayesian statistics is very flexible (e.g., relatively easy to adapt model, priors, constraints).
 
-- Also, Bayesian modeling allows really cool model assessment. Below we will briefly highlight the following:
+- Also, Bayesian modeling allows really cool model assessment. Below we will highlight the following:
 
     - *Prior predictive distribution*: What type of data does your model of choice predict, *even before you look at your own data*? Is the model sensible to start with?
     
-    - *Posterior predictive distribution*: How does data generated from the estimated model relate to your observed data? This also works for out-of-sample observed data (it is even preferable).
+    - *Posterior predictive distribution*: How does data generated from the estimated model relate to your observed data? This also works for out-of-sample observed data.
     
     - *Model comparisons*: How to decide between competing models?
 
@@ -281,13 +297,13 @@ Humm, are these priors sensible?
 
 - You can see what kind of data is generated from the model (priors and likelihood combined). This is what the *prior predictive distribution* is all about.
 
-So, let's sample data from the prior predictive distribution. That is, we sample from the model *before* estimation (!!).
+So, let's sample data from the prior predictive distribution. That is, we sample from the model *before* estimation (!).
 
 ```{r}
 icu.bayes.priorPD <- stan_glm(died ~ age + cancer + admit + uncons, 
-                      data   = ICU, 
-                      family = binomial, 
-                      prior_PD = TRUE, seed = 678) # draw from prior predictive dist.
+                              data   = ICU, 
+                              family = binomial, 
+                              prior_PD = TRUE, seed = 678) # draw from prior pred. dist.
 ```
 
 As an example, let's see the generated values of $P(\text{died}=Yes)$, based on the model predictors (age, cancer, admit, uncons):
@@ -296,68 +312,195 @@ As an example, let's see the generated values of $P(\text{died}=Yes)$, based on 
 # Probabilities P(died = Yes):
 priorPD.prob <- posterior_linpred(icu.bayes.priorPD, transform = TRUE, draws = 4)
 
-par(mar = c(4, 6.5, 2.5, 1))
+par(mar = c(4, .5, 1, .5))
 layout(matrix(1:4, nrow = 2))
 for (i in 1:4)
 {
-  hist(priorPD.prob[i, ], xlim = c(0, 1), freq = FALSE, 
-       col = "gray", bty = "n", las = 1, 
-       xlab = "P(died = Yes)", ylab = "", yaxt = "n", main = "", xaxs = "i", yaxs = "i")
+  hist(priorPD.prob[i, ], xlim = c(0, 1), col = "gray", bty = "n", 
+       xlab = "P(died = Yes)", ylab = "", yaxt = "n", main = "")
 }
 ```
 
 The model is rather flexible. Some flexibility is good, but too much may be ill devised.
 
-If needed, change the model (e.g., different link function, different priors).
+If needed, change the model (e.g., different likelihood, different priors).
 
 # Posterior predictive distribution
 
 How well do data generated from the *estimated* model relate to the observed data?
 
+For instance, predicted outcome frequencies:
+
 ```{r fig.height = 6}
 pp_check(icu.bayes, "ppc_hist", binwidth = .05)
 ```
+
+Predicted outcome frequencies, a different view:
 
 ```{r fig.height = 6}
 pp_check(icu.bayes, plotfun = "ppc_bars")
 ```
 
+Overall $P(\text{died} = Yes)$:
+
 ```{r fig.height = 6}
 pp_check(icu.bayes, plotfun = "ppc_stat", stat = "mean", binwidth = .01)
 ```
+
+Prediction errors:
 
 ```{r fig.height = 6}
 pp_check(icu.bayes, plotfun = "ppc_error_hist", nreps = 9, binwidth = .05)
 ```
 
-# To look at...
+Estimated logistic model across conditions, with 95% uncertainty bands:
+
+```{r fig.height = 8}
+age.vec    <- seq(min(ICU$age), max(ICU$age), length.out = 100)
+design.mat <- matrix(c(1, 1, 1, 1, 1, 1, 1, 1,  # intercept
+                       0, 0, 0, 0, 1, 1, 1, 1,  # cancer
+                       0, 0, 1, 1, 0, 0, 1, 1,  # admit
+                       0, 1, 0, 1, 0, 1, 0, 1), # uncons
+                     ncol = 8, byrow = TRUE) 
+post.mat   <- as.matrix(icu.bayes)
+
+par(mar = c(3, 6.5, 2.5, 1))
+layout(matrix(c(1, 2, 5, 3, 4, 5), nrow = 3), heights = c(3, 3, .8))
+for (i in 1:4)
+{
+  plot(NULL, xlim = c(min(ICU$age), max(ICU$age)), ylim = c(0, 1), 
+       las = 1, bty = "n", xaxs = "i", yaxs = "i", xaxt = "n", xlab = "", ylab = "")
+  axis(1, at = c(min(ICU$age), max(ICU$age)), labels = c("", ""), lwd.ticks = 0)
+  axis(1, at = seq(20, 80, 20), lwd = 0, lwd.ticks = 1)
+  mtext("Age", 1, 2)
+  
+  for (j in 1:2)
+  {
+    design.coef  <- design.mat[, 2*(i-1) + j]
+    mean.logis   <- plogis(sum(coef(icu.bayes)[-2] * design.coef) + coef(icu.bayes)[2] * age.vec)
+    postPD.logis <- apply(post.mat, 1, function(vec) plogis(sum(vec[-2] * design.coef) + vec[2] * age.vec))
+    L.025        <- apply(postPD.logis, 1, function(vec) quantile(vec, probs = .025))
+    L.975        <- apply(postPD.logis, 1, function(vec) quantile(vec, probs = .975))
+    
+    points (age.vec, mean.logis, type = "l",  col = j+1)
+    polygon(c(age.vec, rev(age.vec)), c(L.025, rev(L.975)), col = adjustcolor(j+1, .05), border = NA)
+    
+    if (i==1) mtext("cancer = No" , 3, .5, cex = 1.2)
+    if (i==3) mtext("cancer = Yes", 3, .5, cex = 1.2)
+    if (i==1) mtext("admit = Elective",  2, 3, cex = 1.2)
+    if (i==2) mtext("admit = Emergency", 2, 3, cex = 1.2)
+  }
+}
+
+par(mar = c(0, 0, 1, 0))
+plot(0, type = "n", axes = FALSE, ann = FALSE, ylim = c(0, .1), xlim = c(0, 1))
+legend("top", c("uncons = Yes", "uncons = No"), lty = 1, col = 3:2, cex = 1.5, 
+       xjust = 0, yjust = .5, ncol = 2)
+```
 
 ## Classification accuracy
 
 Compare observed $y$ scores (0 = not died; 1 = died) with predicted $y$ scores.
 
-Here we do in-sample prediction (out-of-sample prediction would be ideal).
+First we do in-sample prediction:
 
 ```{r}
-# Predicted probabilities
-logodds <- posterior_linpred(icu.bayes)
-prob    <- posterior_linpred(icu.bayes, transform = TRUE)
-prob    <- colMeans(prob)
-pred.died      <- as.integer(prob >= 0.5)
+# Predicted probabilities:
+postPD.probs <- posterior_linpred(icu.bayes, transform = TRUE)
+postPD.prob  <- colMeans(postPD.probs)
+postPD.pred  <- as.integer(postPD.prob >= 0.5)
    
-# posterior classification accuracy
-round(mean(xor(pred.died,as.integer(ICU$died=="No"))),2)
+# Posterior classification accuracy:
+mean(died.vec == postPD.pred)
 ```
 
+Classification accuracy can be inflated when estimated from seen data. It is better to use out-of-sample data, or at least cross-validation:
 
+```{r}
+# LOO predictive probabilities:
+icu.bayes.loo <- loo(icu.bayes, save_psis = TRUE)
+loo.prob      <- E_loo(postPD.probs, icu.bayes.loo$psis_object, 
+                       type="mean", log_ratios = -log_lik(icu.bayes))$value
 
+# LOO classification accuracy:
+mean(died.vec == as.integer(loo.prob > .5))
+```
 
+So, we conclude that model-predicted probabilities and leave-one-out cross-validation probabilities match quite well:
 
+```{r fig.height = 6}
+par(mar = c(4, 6.5, 2.5, 1))
+plot(postPD.prob, loo.prob, xlim = c(0, 1), ylim = c(0, 1), 
+     pch = 21, bg = "gray", bty = "n", las = 1, 
+     xlab = "", ylab = "", xaxs = "i", yaxs = "i")
+mtext("Posterior predictive probabilities", 1, 2)
+mtext("LOO predictive probabilities", 2, 2.5)
+abline(0, 1, lty = 2, col = "gray")
+```
 
+# Model comparison
 
+We can think of comparing competing models in two main ways (see [this](https://fabiandablander.com/r/Law-of-Practice.html#fnref:3){target="_blank"} blog post of Fabian Fablander for an enlightening discussion):
 
+- *Posterior* prediction: How do the models fare against each other in terms of out-of-sample prediction error, based on the estimated model (i.e., posterior distributions)?
 
+- *Prior* prediction: How do models fare against each other in terms of predicting the observed data (i.e., based on the prior distributions)?
+
+Below we look at two posterior prediction tools (approximate leave-one-out cross-validation and k-fold cross-validation) and one prior prediction tool (the Bayes factor).
+
+## (Approximate) Leave-one-out cross-validation
+
+We can validate our model by conducting an approximate leave-one-out cross-validation [@vehtari2017]. For example, how much better does our model perform in comparison to the baseline model? Here the idea is that we are looking for the model with better *posterior prediction* ability.
+
+```{r}
+icu.bayes.BL     <- update(icu.bayes, died ~ 1)  # Fit baseline model
+icu.bayes.BL.loo <- loo(icu.bayes.BL)
+compare_models(icu.bayes.BL.loo, icu.bayes.loo)
+```
+
+We conclude that the full model is preferred.
+
+For those used to the AIC, you can use the LOO equivalent (LOOIC):
+
+```{r}
+icu.bayes.loo
+```
+
+According to Gabry and Goodrich ([here](http://mc-stan.org/rstanarm/articles/rstanarm.html#step-2-draw-from-the-posterior-distribution){target="_blank"}),
+
+> The "LOO Information Criterion (LOOIC)", has the same purpose as the Akaike Information Criterion (AIC) that is used by frequentists. Both are intended to estimate the expected log predicted density (ELPD) for a new dataset. However, the AIC ignores priors and assumes that the posterior distribution is multivariate normal, whereas the functions from the loo package used here do not assume that the posterior distribution is multivariate normal and integrate over uncertainty in the parameters.
+
+## K-fold cross-validation
+
+An alternative to leave-one-out cross-validation. <br>
+(Be patient, it takes some time.)
+
+```{r message=FALSE}
+icu.bayes.kfold    <- rstanarm::kfold(icu.bayes,    K = 10)
+icu.bayes.BL.kfold <- rstanarm::kfold(icu.bayes.BL, K = 10)
+compare_models(icu.bayes.BL.kfold, icu.bayes.kfold)
+```
+
+Similarly, we have evidence supporting the full model.
+
+## Bayes factors
+
+With LOO-CV and K-fold CV we compare models in terms of their posterior predictive qualities.
+
+Bayes factors, on the other hand, focus on *prior prediction* qualities of the models under comparison: How well does each model predict the observed data, for the combination of likelihood and priors at hand?
+
+```{r message=FALSE, warning=FALSE, results='hide'}
+icu.bayes.bf    <- update(icu.bayes,    diagnostic_file = file.path(tempdir(), "df1.csv"))
+icu.bayes.BL.bf <- update(icu.bayes.BL, diagnostic_file = file.path(tempdir(), "df2.csv"))
+
+icu.bayes.bridge    <- bridge_sampler(icu.bayes.bf)
+icu.bayes.BL.bridge <- bridge_sampler(icu.bayes.BL.bf)
+```
+
+```{r}
+bf(icu.bayes.bridge, icu.bayes.BL.bridge)
+```
+
+There is overwhelming evidence in favor of the full model.
 
 `r if (knitr::is_html_output()) '# References {-}'`
-
-
