@@ -23,9 +23,9 @@ bibliography: ../references.bib
 csl: ../style/apa-old-doi-prefix.csl
 ---
 
+<img src="qrplot.png" width="200" height="200" />
+
 <br><br>
-
-
 
 # Set up
 
@@ -126,7 +126,7 @@ mtext("Jittered DV", 2, 2.5)
 Plot sensitivity and specificity at all possible probability cutoff points:
 
 ```{r message=FALSE, fig.height = 6}
-roc.out  <- roc(died ~ est.prob, data = ICU)
+roc.out  <- roc(died ~ est.prob, data = ICU, ci = TRUE)
 
 par(mar = c(4, 6.5, 2.5, 1))
 plot(roc.out$thresholds, roc.out$sensitivities, xlim = c(0, 1), 
@@ -266,12 +266,6 @@ The numerical estimates look very close... So, why should we bother using Bayesi
 
 - First of all, the *interpretation* of the results is different. For instance, note that confidence interval $\not=$ credible interval (the latter is *much* more intuitive). 
 
-- Also, Bayesian statistics allows answering questions of the type:
-
-    - "What is the probability that the log-odds of predictor X is larger than 1?"
-    
-    - (Add more examples, depending on how the Bayesian sections below develop).
-
 - Bayesian statistics is very flexible (e.g., relatively easy to adapt model, priors, constraints).
 
 - Also, Bayesian modeling allows really cool model assessment. Below we will highlight the following:
@@ -321,9 +315,10 @@ for (i in 1:4)
 }
 ```
 
-The model is rather flexible. Some flexibility is good, but too much may be ill devised.
-
+The model is rather flexible. Some flexibility is good, but too much may be ill devised.<br>
 If needed, change the model (e.g., different likelihood, different priors).
+
+We will come back to the prior predictive distribution later when performing models comparison through Bayes factors (Section \@ref(sec::BFs)).
 
 # Posterior predictive distribution
 
@@ -438,6 +433,151 @@ mtext("LOO predictive probabilities", 2, 2.5)
 abline(0, 1, lty = 2, col = "gray")
 ```
 
+## Express uncertainity about pretty much anything!
+
+Here is a motto that expresses well one of the main benefits of Bayesian statistics:
+
+> Express our uncertainty about any outcome by means of a probability distribution.
+
+For instance, after fitting the logistic model the frequentist way, we found "the" ROC and "the" AUC. But these are just one instance of the ROC and the AUC, computed based on the frequentist estimates of the parameters of the logistic regression model. 
+
+A Bayesian would ask: "How much uncertainty is there in the ROC and the AUC?"
+
+The answer is simple: Use the posterior predictive distribution! Simply, compute the ROC and AUC for each replicated dataset generated from the posterior predictive distribution. This gives the posterior predictive distribution of the ROC and the AUC, which summarize all our uncertainty about them given our model and observed data.
+
+```{r}
+my.thresholds <- seq(0, 1, .01)
+roc.bayes.sen <- matrix(NA, nrow(postPD.probs), length(my.thresholds))
+roc.bayes.spe <- matrix(NA, nrow(postPD.probs), length(my.thresholds))
+roc.bayes.auc <- rep   (NA, nrow(postPD.probs))
+
+for (i in 1:nrow(postPD.probs)) 
+{
+  tmp                <- roc(ICU$died ~ postPD.probs[i, ], quiet = TRUE)
+  tmp.std            <- coords(tmp, my.thresholds, transpose = FALSE, 
+                               input="thr", ret = c("sen", "spe"))
+  roc.bayes.sen[i, ] <- tmp.std$sen
+  roc.bayes.spe[i, ] <- tmp.std$spe
+  roc.bayes.auc[i]   <- tmp$auc
+}
+```
+
+Here are 4,000 ROC curves from the posterior predictive distribution:
+
+```{r fig.height = 6}
+par(mar = c(4, 6.5, 2.5, 1))
+plot(1 - roc.bayes.spe[1, ], roc.bayes.sen[1, ], 
+     type = "l", col = "gray", bty = "n", 
+     xlab = "", ylab = "", axes = FALSE)
+for (i in 2:4000) points(1 - roc.bayes.spe[i, ], roc.bayes.sen[i, ], 
+                         type = "l", col = "gray", lwd = .5)
+points(1-roc.out$specificities, roc.out$sensitivities, 
+       type = "l", lwd = 2)
+segments(0, 0, 1, 1, lty = 2, col = "gray")
+axis(1, pos = 0)
+mtext("1 - Specificity", 1, 1.5)
+axis(2, pos = 0, las = 1)
+mtext("Sensitivity", 2, 1.5)
+legend(.5, .3, c("ROC (Freq)" , paste0("ROC (Bayes, ", nrow(postPD.probs), c(" reps)"))), 
+       lwd = c(2, .5), seg.len = 4, col = c("black", "gray"), cex = .8)
+```
+
+Humm, what are those strange ROCs on the bottom?<br>
+After some inspection, I realized that those are related to negative estimates for the 'age' effect:
+
+```{r fig.height = 6}
+par(mar = c(4, 6.5, 2.5, 1))
+plot(1 - roc.bayes.spe[1, ], roc.bayes.sen[1, ], 
+     type = "l", col = "gray", bty = "n", 
+     xlab = "", ylab = "", axes = FALSE)
+for (i in 2:4000) points(1 - roc.bayes.spe[i, ], roc.bayes.sen[i, ], 
+                         type = "l", col = "gray", lwd = .5)
+points(1-roc.out$specificities, roc.out$sensitivities, 
+       type = "l", lwd = 2)
+segments(0, 0, 1, 1, lty = 2, col = "gray")
+axis(1, pos = 0)
+mtext("1 - Specificity", 1, 1.5)
+axis(2, pos = 0, las = 1)
+mtext("Sensitivity", 2, 1.5)
+
+for (i in which(as.matrix(icu.bayes)[, 2] < 0))
+{
+  points(1 - roc.bayes.spe[i, ], roc.bayes.sen[i, ], type = "l", col = "blue", lwd = 3)
+}
+legend(.5, .3, c("ROC (Freq)", 
+                 paste0("ROC (Bayes, ", nrow(postPD.probs), c(" reps)")), 
+                 "ROC (Bayes, age < 0)"), 
+       lwd = c(2, .5, 3), seg.len = 4, col = c("black", "gray", "blue"), cex = .8)
+```
+
+So we learned something by inspecting the posterior predictive distribution. Perhaps we should consider refitting the model, this time adding a constraint for the age effect (would that be theoretically sensible?).
+
+Finally, the AUC:
+
+```{r fig.height = 6}
+par(mar = c(4, 6.5, 2.5, 1))
+hist(roc.bayes.auc, xlim = c(.6, .9), col = "gray", bty = "n", 
+       xlab = "", ylab = "", yaxt = "n", 
+     main = paste0("95% credible interval = (", 
+                   round(quantile(roc.bayes.auc, .025), 2), 
+                   ", ", 
+                   round(quantile(roc.bayes.auc, .975), 2), 
+                   ")"), 
+     yaxs = "i")
+mtext("AUC", 1, 2)
+```
+
+Note: In this case, the 95% credible interval for the AUC differs markedly from the 95% frequentist confidence interval:
+
+```{r}
+roc.out$ci
+```
+
+The explanation is that the frequentist CI is based on bootstrap samples (i.e., resamples from the observed data), whereas the Bayesian CI is based on posterior predictive distribution samples. As it happens, these differed quite a lot for these data.
+<br><br>
+
+Finally, we noticed under the frequentist model that, at threshold 0.2, we had <br>
+1-specificity = `r round(onemspec, 2)` <br>
+and <br> 
+sensitivity = `r round(sensit, 2)`. <br> 
+How uncertain are we about these estimates?
+
+```{r fig.height = 6}
+th.pos <- which(my.thresholds == .20)
+
+par(mar = c(4, 6.5, 2.5, 1))
+layout(matrix(c(1, 2), ncol = 1))
+
+hist(1 - roc.bayes.spe[, th.pos], freq = FALSE, las = 1, xlim = c(0, .7), 
+     col = "gray", main = "", xlab = "")
+mtext("1 - Specificity", 1, 2)
+abline(v = c(onemspec, median(1 - roc.bayes.spe[, th.pos])), lty = 1:2, col = 2, lwd = 2)
+legend(.42, 4, c(paste0("Freq. estimate = ", round(onemspec, 2)), 
+                 paste0("Bayes (median) = ", round(median(1 - roc.bayes.spe[, th.pos]), 2))), 
+       lwd = 2, lty = 1:2, seg.len = 2, col = 2, cex = .8)
+legend(.42, 2, bty = "n", 
+       paste0("95% credible int. = (", 
+              round(quantile(1 - roc.bayes.spe[, th.pos], .025), 2), 
+              ", ", 
+              round(quantile(1 - roc.bayes.spe[, th.pos], .975), 2), 
+              ")"), cex = .8)
+
+hist(roc.bayes.sen[, th.pos], freq = FALSE, las = 1, 
+     col = "gray", main = "", xlab = "")
+mtext("Sensitivity", 1, 2)
+abline(v = c(sensit, median(roc.bayes.sen[, th.pos])), lty = 1:2, col = 2, lwd = 2)
+legend(.35, 5, c(paste0("Freq. estimate = ", round(sensit, 2)), 
+                paste0("Bayes (median) = ", round(median( roc.bayes.sen[, th.pos]), 2))), 
+       lwd = 2, lty = 1:2, seg.len = 2, col = 2, cex = .8)
+legend(.35, 3, bty = "n", 
+       paste0("95% credible int. = (", 
+              round(quantile(roc.bayes.sen[, th.pos], .025), 2), 
+              ", ", 
+              round(quantile(roc.bayes.sen[, th.pos], .975), 2), 
+              ")"), cex = .8)
+```
+
+
 # Model comparison
 
 We can think of comparing competing models in two main ways (see [this](https://fabiandablander.com/r/Law-of-Practice.html#fnref:3){target="_blank"} blog post of Fabian Fablander for an enlightening discussion):
@@ -483,7 +623,7 @@ compare_models(icu.bayes.BL.kfold, icu.bayes.kfold)
 
 Similarly, we have evidence supporting the full model.
 
-## Bayes factors
+## Bayes factors  {#sec::BFs} 
 
 With LOO-CV and K-fold CV we compare models in terms of their posterior predictive qualities.
 
