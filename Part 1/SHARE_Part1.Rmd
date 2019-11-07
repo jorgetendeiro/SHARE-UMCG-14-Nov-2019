@@ -2,7 +2,7 @@
 title:    "Bayesian statistics as a therapy for frequentist problems"
 subtitle: "<br>Part 1: The replication crisis <br> (and what does Statistics have to do with it)"
 author:   "<br><br>Jorge N. Tendeiro"
-date:     "November 14, 2019<br><br><br> [https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019](https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019)"
+date:     "November 14, 2019<br><br><br> [https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019](https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019){target="_blank"}"
 output: 
   revealjs::revealjs_presentation:
     theme:     serif
@@ -52,7 +52,7 @@ knitr::include_graphics('figures/Baker 2016.jpeg')
 <br>
 [Data tampering](https://retractionwatch.com/2017/12/12/psychologist-fire-leaves-university-start-private-practice/).
 <br><br>
-- ...o
+- ...
 
 ## Causes for the crisis?
 
@@ -170,7 +170,7 @@ For the sake of balance, not everyone agrees [e.g., @fiedler2016].
 > Probability of an effect at least as extreme as the one we observed, *given that $\mathcal{H}_0$ is true*.
 
 <br><br>
-\[\fbox{$ p\text{-value} = P\left(X_\text{obs} \text{ or more extreme}|\mathcal{H}_0\right) $}\]
+\[\fbox{$ p\text{-value} = P\left(X_\text{obs} \text{ or more extreme}|\mathcal{H}_0\text{ true}\right) $}\]
 <br><br>
 
 The definition is simple enough, right?...
@@ -189,14 +189,25 @@ from the above premises. Also note that several or none of the statements may be
 knitr::include_graphics('figures/Gigerenzer p values.png')
 ```
 
-Try it!: [http://rebrand.ly/wdve2g](http://rebrand.ly/wdve2g)
+## Test yourself
+
+Try it!
+
+<center>
+[http://rebrand.ly/wdve2g](http://rebrand.ly/wdve2g){target="_blank"}
+</center>
+<br>
+
+```{r, fig.align = 'center', out.width='40%', echo = FALSE}
+knitr::include_graphics('figures/QR code - pvalues.png')
+```
 
 <!-- Poll here: http://www.polljunkie.com/poll/yezkij/what-is-a-p-value/admin -->
 <!-- Shorter: https://rebrand.ly/pvalue -->
 <!-- Available only until 31 August 2019 -->
 
-## Results
-**All** statements are <span style="color:red">incorrect</span>.
+<!-- ## Results -->
+<!-- **All** statements are <span style="color:red">incorrect</span>. -->
 
 ## Results
 But how did students and teachers perceive these statements?
@@ -274,13 +285,25 @@ knitr::include_graphics('figures/Hoekstra2014 I.png')
 knitr::include_graphics('figures/Hoekstra2014 II.png')
 ```
 
-Try it!: [http://rebrand.ly/bxraj6](http://rebrand.ly/bxraj6)
+## Test yourself
+
+Try it!
+
+<center>
+[http://rebrand.ly/bxraj6](http://rebrand.ly/bxraj6){target="_blank"}
+</center>
+<br>
+
+```{r, fig.align = 'center', out.width='40%', echo = FALSE}
+knitr::include_graphics('figures/QR code - CIs.png')
+```
+
 <!-- Poll here: http://www.polljunkie.com/poll/ykmrid/what-is-a-confidence-interval-hoekstra-et-al-2014 -->
 <!-- Shorter: https://rebrand.ly/confint -->
 <!-- Available only until 31 August 2019 -->
 
-## Results
-**All** statements are <span style="color:red">incorrect</span>.
+<!-- ## Results -->
+<!-- **All** statements are <span style="color:red">incorrect</span>. -->
 
 ## Results
 But how did students and teachers perceive these statements?
