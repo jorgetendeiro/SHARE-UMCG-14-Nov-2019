@@ -12,11 +12,11 @@ output:
     reveal_options:
       slideNumber: true
       # mouseWheel: true
-    css: [style/slides.css]
+    css: [../style/slides.css]
     includes:
-      in_header: style/TOC_generator.js.wrapper
-bibliography: references.bib
-csl: style/apa-old-doi-prefix.csl
+      in_header: ../style/TOC_generator.js.wrapper
+bibliography: ../references.bib
+csl: ../style/apa-old-doi-prefix.csl
 ---
 
 # Today
