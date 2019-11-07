@@ -10,7 +10,7 @@ output:
     toc: true
     toc_float:
       collapsed: false
-    toc_depth: 2
+    toc_depth: 1
     fig_caption: true
     number_sections: true
     theme: cosmo        
@@ -31,45 +31,47 @@ csl: ../style/apa-old-doi-prefix.csl
 
 ## Bayes rule
 
-Say we have data $\mathcal{D}$, which we use to improve our understanding on the possible values of an unknown parameter $\theta$. For instance, $\theta$ can be the incidence rate of a particular medical condition in the population, and $\mathcal{D}$ the scores of a sample of patients on an indicator for that condition.
+Say you have data $\mathcal{D}$, which you use to improve your understanding on the possible values of an unknown parameter $\theta$. For instance, $\theta$ can be the incidence rate of a particular medical condition in the population, and $\mathcal{D}$ the scores of a sample of patients on an indicator for that condition.
 
 Bayesian statistics works as follows:
 
-- Select a model by means of a *likelihood function*. The model conceptualizes how theory and data meet: It expresses, for any given value of the model parameter $\theta$, what the probability of *any* observed data is. This is denoted by $p(\mathcal{D}|\theta)$ (read: "probability of $\mathcal{D}$ conditional on a particular $\theta$ value").
+- Select a statistical model. The model conceptualizes how theory and data meet: It expresses, for any given value of the model parameter $\theta$, what the probability of *any* observed data is. This is denoted by $p(\mathcal{D}|\theta)$ (read: "probability of $\mathcal{D}$ conditional on a particular $\theta$ value") and often referred to as the *likelihood* function.
 
-- *Before looking at the data*, express your belief about the value of $\theta$ in the population. 'Belief' does not mean 'religious' belief. It means a rational expression of one's knowledge about $\theta$. For instance, suppose the medical condition in our study is very rare: All research thus far suggests that less than 1% of the population is affected by it. This knowledge can (and *should*!) be incorporated in the analysis. The *prior* distribution, denoted $p(\theta)$, does exactly this.
+- *Before looking at the data*, express your belief about the value of $\theta$ in the population. This 'belief' does not equate with the 'religious' kind of belief. Instead, it refers to an educated expression of one's knowledge about the world. For instance, suppose the medical condition in your study is very rare: All research thus far suggests that less than 1% of the population is affected by it. This knowledge can (and *should*!) be incorporated in the analysis. The *prior* distribution, denoted $p(\theta)$, does exactly this.
 
 - Collect your data.
 
 - By means of the **Bayes rule** (see below), update your knowledge. Before the experiment, your knowledge about $\theta$ is encoded by the prior distribution. *After* looking at the data, you will rationally update your belief about $\theta$. The so-called *posterior* distribution, here denoted $p(\theta|\mathcal{D})$, represents your updated knowledge.
 
-Using math notation:
+The Bayes rule can be written as follows:
 
 $$
-p(\theta|\mathcal{D}) = \frac{p(\theta)p(\mathcal{D}|\theta)}{p(\mathcal{D})},
+p(\theta|\mathcal{D}) = \frac{p(\theta)p(\mathcal{D}|\theta)}{p(\mathcal{D})}.
 $$
 
 It doesn't look nice...
 
-Perhaps in words:
+Perhaps rewriting Bayes rule in words helps:
 
 $$
-\text{posterior} = \frac{\text{prior} \times \text{likelihood}}{\text{evidence}},
+\text{posterior} = \frac{\text{prior} \times \text{likelihood}}{\text{evidence}}.
 $$
 
-Notice that the evidence, $p(\mathcal{D})$, does not depend on $\theta$. It is there just to ensure that the posterior distribution is well defined (among other things that we won't be discussing today). For most purposes we can actually hide it and rewrite Bayes rule like ths:
+Notice that the evidence, $p(\mathcal{D})$, does not depend on $\theta$. It is there just to ensure that the posterior distribution is well defined (among other things that we won't be discussing today). For most purposes we can actually hide it and rewrite Bayes rule like this:
 
 $$
 \text{posterior} \propto \text{prior} \times \text{likelihood},
 $$
-where $\propto$ means "proportional to". Therefore, the posterior distribution is basically the prior distribution multiplied by the likelihood function.
+where $\propto$ means "proportional to". 
+
+Therefore, the posterior distribution is basically a (rational, logically correct) means of merging together both our prior knowledged about some phenomenon with the information about the phenomenon that our data has to offer.
 
 ## Summary
 
-Bayesian statistics allows us to rationally update our knowledge about a phenomenon. All you need is three ingredients:
+Bayesian statistics allows you to rationally update your knowledge about a phenomenon. All you need is three ingredients:
 
 - a statistical model;
-- a prior distribution;
+- a prior belief;
 - data.
 
 Any person with the same set of 3 ingredients will update his/her knowledge in the same way (that is what I mean by *rational* update). "The" unique way of updating our knowledge is given by the Bayes rule. This rule, by the way, is universal and accepted by frequentists and Bayesians alike (it is mathematically based on axioms). The Bayes rule is a mathematical necessity. Not accepting the Bayes rule is not accepting the basic axioms of probability.
@@ -84,7 +86,7 @@ In order to fit Bayesian logistic regression, I decided to use the [rstanarm](ht
 
 For the Bayesian analysis below, I drew inspiration from:
 
-- a vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html){target="_blank"}).
+- A vignette from Aki Vehtari, Jonah Gabry, and Ben Goodrich ([https://avehtari.github.io/modelselection/diabetes.html](https://avehtari.github.io/modelselection/diabetes.html){target="_blank"}).
 
 - The plotting tools of the [bayesplot](https://cran.r-project.org/web/packages/bayesplot/index.html){target="_blank"} package ([https://mc-stan.org/bayesplot/index.html](https://mc-stan.org/bayesplot/index.html){target="_blank"}).
 
@@ -132,7 +134,7 @@ $$
 \end{align}
 $$
 
-Later on, to illustrate how model comparison can be performed under the Bayesian framework, I will also consider the reduced model from which 'uncons' was removed:
+Later on, to illustrate how model comparison can be performed under the Bayesian framework, I will also consider the reduced model which excludes predictor 'uncons':
 
 $$
 \DeclareMathOperator{\logit}{logit}
@@ -255,6 +257,14 @@ icu.bayes <- stan_glm(died   ~ age + cancer + admit + uncons,
 summary(icu.bayes, digits = 3)
 ```
 
+***
+
+**<span style="color:red">Important note:</span>** The function above relies on a *whole lot* of defaults (e.g., choice of priors, number of MCMC chains, burn-in period, etc. etc.). I decided to use all defaults to keep things simple: I want to focus on the end-product rather than on the model fitting intricacies. However, for more serious work, you are *strongly adviced* to think more carefully about the model fit and convergence.
+
+For more information on all this, you can start by reading some of the vignettes and blog posts that I added above. Provided you understand what I show below, the rest that you need to learn becomes much more accessible.
+
+***
+
 Let's plot the posterior distributions:
 
 ```{r fig.height = 6}
@@ -320,7 +330,7 @@ The numerical estimates look very close... So, why should we bother using Bayesi
 # Prior predictive distribution
 
 What priors are being used by default in stan_glm()?<br>
-(Btw: You should always strive to set up your own priors.)
+(Remember: You should always strive to set up your own priors!)
 
 ```{r}
 prior_summary(icu.bayes)
@@ -655,17 +665,16 @@ Similarly, we have evidence supporting the full model.
 
 With LOO-CV and K-fold CV we compare models in terms of their posterior predictive qualities.
 
-Bayes factors, on the other hand, focus on *prior prediction* qualities of the models under comparison: How well does each model predict the observed data, for the combination of likelihood and priors at hand?
+Bayes factors, on the other hand, focus on *prior prediction* qualities of the models under comparison:<br>
+How well does each model (i.e., combination of likelihood and priors) predict the observed data?
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
 icu.bayes.bf     <- update(icu.bayes,     diagnostic_file = file.path(tempdir(), "df1.csv"))
-icu.bayes.red.bf <- update(icu.bayes.red, diagnostic_file = file.path(tempdir(), "df2.csv"))
+icu.bayes.bridge <- bridge_sampler(icu.bayes.bf)
 
-icu.bayes.bridge     <- bridge_sampler(icu.bayes.bf)
+icu.bayes.red.bf     <- update(icu.bayes.red, diagnostic_file = file.path(tempdir(), "df2.csv"))
 icu.bayes.red.bridge <- bridge_sampler(icu.bayes.red.bf)
-```
 
-```{r}
 bf(icu.bayes.bridge, icu.bayes.red.bridge)
 ```
 
