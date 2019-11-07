@@ -2,7 +2,7 @@
 title:    "Bayesian statistics as a therapy for frequentist problems"
 subtitle: "Part 2: Bayes in action"
 author:   "Jorge N. Tendeiro"
-date:     "November 14, 2019<br><br> [https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019](https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019)"
+date:     "November 14, 2019<br><br> [https://rebrand.ly/Tendeiro_SHARE2](https://rebrand.ly/Tendeiro_SHARE2)"
 header-includes:
   - \usepackage{amsmath}
 output:   
