@@ -2,7 +2,7 @@
 title:    "Bayesian statistics as a therapy for frequentist problems"
 subtitle: "<br>Part 1: The replication crisis <br> (and what does Statistics have to do with it)"
 author:   "<br><br>Jorge N. Tendeiro"
-date:     "November 14, 2019<br><br><br> [https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019](https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019){target="_blank"}"
+date:     "November 14, 2019<br><br><br> [https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019](https://github.com/jorgetendeiro/SHARE-UMCG-14-Nov-2019)"
 output: 
   revealjs::revealjs_presentation:
     theme:     serif
