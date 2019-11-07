@@ -23,9 +23,56 @@ bibliography: ../references.bib
 csl: ../style/apa-old-doi-prefix.csl
 ---
 
-<img src="qrplot.png" width="200" height="200" />
+<img src="qrplot.png" width="250" height="250" />
 
 <br><br>
+
+# Basics
+
+## Bayes rule
+
+Say we have data $\mathcal{D}$, which we use to improve our understanding on the possible values of an unknown parameter $\theta$. For instance, $\theta$ can be the incidence rate of a particular medical condition in the population, and $\mathcal{D}$ the scores of a sample of patients on an indicator for that condition.
+
+Bayesian statistics works as follows:
+
+- Select a model by means of a *likelihood function*. The model conceptualizes how theory and data meet: It expresses, for any given value of the model parameter $\theta$, what the probability of *any* observed data is. This is denoted by $p(\mathcal{D}|\theta)$ (read: "probability of $\mathcal{D}$ conditional on a particular $\theta$ value").
+
+- *Before looking at the data*, express your belief about the value of $\theta$ in the population. 'Belief' does not mean 'religious' belief. It means a rational expression of one's knowledge about $\theta$. For instance, suppose the medical condition in our study is very rare: All research thus far suggests that less than 1% of the population is affected by it. This knowledge can (and *should*!) be incorporated in the analysis. The *prior* distribution, denoted $p(\theta)$, does exactly this.
+
+- Collect your data.
+
+- By means of the **Bayes rule** (see below), update your knowledge. Before the experiment, your knowledge about $\theta$ is encoded by the prior distribution. *After* looking at the data, you will rationally update your belief about $\theta$. The so-called *posterior* distribution, here denoted $p(\theta|\mathcal{D})$, represents your updated knowledge.
+
+Using math notation:
+
+$$
+p(\theta|\mathcal{D}) = \frac{p(\theta)p(\mathcal{D}|\theta)}{p(\mathcal{D})},
+$$
+
+It doesn't look nice...
+
+Perhaps in words:
+
+$$
+\text{posterior} = \frac{\text{prior} \times \text{likelihood}}{\text{evidence}},
+$$
+
+Notice that the evidence, $p(\mathcal{D})$, does not depend on $\theta$. It is there just to ensure that the posterior distribution is well defined (among other things that we won't be discussing today). For most purposes we can actually hide it and rewrite Bayes rule like ths:
+
+$$
+\text{posterior} \propto \text{prior} \times \text{likelihood},
+$$
+where $\propto$ means "proportional to". Therefore, the posterior distribution is basically the prior distribution multiplied by the likelihood function.
+
+## Summary
+
+Bayesian statistics allows us to rationally update our knowledge about a phenomenon. All you need is three ingredients:
+
+- a statistical model;
+- a prior distribution;
+- data.
+
+Any person with the same set of 3 ingredients will update his/her knowledge in the same way (that is what I mean by *rational* update). "The" unique way of updating our knowledge is given by the Bayes rule. This rule, by the way, is universal and accepted by frequentists and Bayesians alike (it is mathematically based on axioms). The Bayes rule is a mathematical necessity. Not accepting the Bayes rule is not accepting the basic axioms of probability.
 
 # Set up
 
@@ -76,7 +123,7 @@ str(ICU)
 
 # Fit logistic regression model
 
-Inspired by the 'vcdExtra' example with these data, I decided to fit the following model for illustratation purposes:
+Inspired by the 'vcdExtra' example with these data, I decided to fit the following model for illustration purposes:
 
 $$
 \DeclareMathOperator{\logit}{logit}
@@ -85,12 +132,12 @@ $$
 \end{align}
 $$
 
-Later on, to illustrate how model comparison can be performed under the Bayesian framework, I will also consider the baseline model (no predictors):
+Later on, to illustrate how model comparison can be performed under the Bayesian framework, I will also consider the reduced model from which 'uncons' was removed:
 
 $$
 \DeclareMathOperator{\logit}{logit}
 \begin{align}
-\logit(P(\text{died}=Yes))=\alpha.
+\logit(P(\text{died}=Yes))=\alpha + \beta_1\text{age} + \beta_2\text{cancer} + \beta_3\text{admit}.
 \end{align}
 $$
 
@@ -109,7 +156,6 @@ Plot the estimated probability against the jittered outcome:
 est.prob <- predict(icu.freq, type = c("response"))
 died.vec <- as.numeric(ICU$died) - 1 # 0 = No, 1 = Yes
 
-par(mar = c(4, 6.5, 2.5, 1))
 plot(est.prob, jitter(died.vec, .2), 
      xlim = c(-.02, 1), ylim = c(-.08, 1.05), pch = 21, bg = "gray", bty = "n", 
      xlab = "", ylab = "", xaxs = "i", yaxs = "i", xaxt = "n", yaxt = "n")
@@ -128,7 +174,6 @@ Plot sensitivity and specificity at all possible probability cutoff points:
 ```{r message=FALSE, fig.height = 6}
 roc.out  <- roc(died ~ est.prob, data = ICU, ci = TRUE)
 
-par(mar = c(4, 6.5, 2.5, 1))
 plot(roc.out$thresholds, roc.out$sensitivities, xlim = c(0, 1), 
      type = "l", lwd = 2, bty = "n", 
      xlab = "", ylab = "", axes = FALSE)
@@ -181,7 +226,6 @@ The ROC curve:
 # plot(roc.out)   # Not so nice!...
 
 # A pimped-up ROC plot:
-par(mar = c(4, 6.5, 2.5, 1))
 plot(1-roc.out$specificities, roc.out$sensitivities, 
      type = "l", lwd = 2, bty = "n", 
      xlab = "", ylab = "", axes = FALSE, 
@@ -214,7 +258,6 @@ summary(icu.bayes, digits = 3)
 Let's plot the posterior distributions:
 
 ```{r fig.height = 6}
-par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1) + geom_vline(xintercept = 0)
 ```
 
@@ -222,12 +265,10 @@ Humm, not very clear. <br>
 Let's plot 'age' separately (its SE is way smaller than the others):
 
 ```{r fig.height = 6}
-par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, 
      pars = c("(Intercept)", "cancerYes", "admitEmergency", "unconsYes")) + 
   geom_vline(xintercept = 0)
 
-par(mar = c(4, 6.5, 2.5, 1))
 plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, pars = c("age")) + 
   geom_vline(xintercept = 0)
 ```
@@ -300,7 +341,7 @@ icu.bayes.priorPD <- stan_glm(died ~ age + cancer + admit + uncons,
                               prior_PD = TRUE, seed = 678) # draw from prior pred. dist.
 ```
 
-As an example, let's see the generated values of $P(\text{died}=Yes)$, based on the model predictors (age, cancer, admit, uncons):
+As an example, let's see four sets of model-generated values of $P(\text{died}=Yes)$, based on the observed scores of the predictors (age, cancer, admit, uncons):
 
 ```{r fig.height = 6}
 # Probabilities P(died = Yes):
@@ -424,7 +465,6 @@ mean(died.vec == as.integer(loo.prob > .5))
 So, we conclude that model-predicted probabilities and leave-one-out cross-validation probabilities match quite well:
 
 ```{r fig.height = 6}
-par(mar = c(4, 6.5, 2.5, 1))
 plot(postPD.prob, loo.prob, xlim = c(0, 1), ylim = c(0, 1), 
      pch = 21, bg = "gray", bty = "n", las = 1, 
      xlab = "", ylab = "", xaxs = "i", yaxs = "i")
@@ -435,7 +475,7 @@ abline(0, 1, lty = 2, col = "gray")
 
 ## Express uncertainity about pretty much anything!
 
-Here is a motto that expresses well one of the main benefits of Bayesian statistics:
+Here is a motto that highlights one of the main benefits of Bayesian statistics:
 
 > Express our uncertainty about any outcome by means of a probability distribution.
 
@@ -455,7 +495,7 @@ for (i in 1:nrow(postPD.probs))
 {
   tmp                <- roc(ICU$died ~ postPD.probs[i, ], quiet = TRUE)
   tmp.std            <- coords(tmp, my.thresholds, transpose = FALSE, 
-                               input="thr", ret = c("sen", "spe"))
+                               input = "thr", ret = c("sen", "spe"))
   roc.bayes.sen[i, ] <- tmp.std$sen
   roc.bayes.spe[i, ] <- tmp.std$spe
   roc.bayes.auc[i]   <- tmp$auc
@@ -465,7 +505,6 @@ for (i in 1:nrow(postPD.probs))
 Here are 4,000 ROC curves from the posterior predictive distribution:
 
 ```{r fig.height = 6}
-par(mar = c(4, 6.5, 2.5, 1))
 plot(1 - roc.bayes.spe[1, ], roc.bayes.sen[1, ], 
      type = "l", col = "gray", bty = "n", 
      xlab = "", ylab = "", axes = FALSE)
@@ -486,7 +525,6 @@ Humm, what are those strange ROCs on the bottom?<br>
 After some inspection, I realized that those are related to negative estimates for the 'age' effect:
 
 ```{r fig.height = 6}
-par(mar = c(4, 6.5, 2.5, 1))
 plot(1 - roc.bayes.spe[1, ], roc.bayes.sen[1, ], 
      type = "l", col = "gray", bty = "n", 
      xlab = "", ylab = "", axes = FALSE)
@@ -512,10 +550,9 @@ legend(.5, .3, c("ROC (Freq)",
 
 So we learned something by inspecting the posterior predictive distribution. Perhaps we should consider refitting the model, this time adding a constraint for the age effect (would that be theoretically sensible?).
 
-Finally, the AUC:
+Here's the posterior distribution for the AUC:
 
 ```{r fig.height = 6}
-par(mar = c(4, 6.5, 2.5, 1))
 hist(roc.bayes.auc, xlim = c(.6, .9), col = "gray", bty = "n", 
        xlab = "", ylab = "", yaxt = "n", 
      main = paste0("95% credible interval = (", 
@@ -526,15 +563,6 @@ hist(roc.bayes.auc, xlim = c(.6, .9), col = "gray", bty = "n",
      yaxs = "i")
 mtext("AUC", 1, 2)
 ```
-
-Note: In this case, the 95% credible interval for the AUC differs markedly from the 95% frequentist confidence interval:
-
-```{r}
-roc.out$ci
-```
-
-The explanation is that the frequentist CI is based on bootstrap samples (i.e., resamples from the observed data), whereas the Bayesian CI is based on posterior predictive distribution samples. As it happens, these differed quite a lot for these data.
-<br><br>
 
 Finally, we noticed under the frequentist model that, at threshold 0.2, we had <br>
 1-specificity = `r round(onemspec, 2)` <br>
@@ -590,12 +618,12 @@ Below we look at two posterior prediction tools (approximate leave-one-out cross
 
 ## (Approximate) Leave-one-out cross-validation
 
-We can validate our model by conducting an approximate leave-one-out cross-validation [@vehtari2017]. For example, how much better does our model perform in comparison to the baseline model? Here the idea is that we are looking for the model with better *posterior prediction* ability.
+We can validate our model by conducting an approximate leave-one-out cross-validation [@vehtari2017]. For example, how much better does our model perform in comparison to a reduced model that excludes predictor 'uncons'? Here the idea is that we are looking for the model with better *posterior prediction* ability.
 
 ```{r}
-icu.bayes.BL     <- update(icu.bayes, died ~ 1)  # Fit baseline model
-icu.bayes.BL.loo <- loo(icu.bayes.BL)
-compare_models(icu.bayes.BL.loo, icu.bayes.loo)
+icu.bayes.red     <- update(icu.bayes, died ~ age + cancer + admit)  # Fit reduced model
+icu.bayes.red.loo <- loo(icu.bayes.red)
+loo_compare(icu.bayes.red.loo, icu.bayes.loo)
 ```
 
 We conclude that the full model is preferred.
@@ -616,9 +644,9 @@ An alternative to leave-one-out cross-validation. <br>
 (Be patient, it takes some time.)
 
 ```{r message=FALSE}
-icu.bayes.kfold    <- rstanarm::kfold(icu.bayes,    K = 10)
-icu.bayes.BL.kfold <- rstanarm::kfold(icu.bayes.BL, K = 10)
-compare_models(icu.bayes.BL.kfold, icu.bayes.kfold)
+icu.bayes.kfold     <- rstanarm::kfold(icu.bayes,     K = 10)
+icu.bayes.red.kfold <- rstanarm::kfold(icu.bayes.red, K = 10)
+loo_compare(icu.bayes.red.kfold, icu.bayes.kfold)
 ```
 
 Similarly, we have evidence supporting the full model.
@@ -630,15 +658,15 @@ With LOO-CV and K-fold CV we compare models in terms of their posterior predicti
 Bayes factors, on the other hand, focus on *prior prediction* qualities of the models under comparison: How well does each model predict the observed data, for the combination of likelihood and priors at hand?
 
 ```{r message=FALSE, warning=FALSE, results='hide'}
-icu.bayes.bf    <- update(icu.bayes,    diagnostic_file = file.path(tempdir(), "df1.csv"))
-icu.bayes.BL.bf <- update(icu.bayes.BL, diagnostic_file = file.path(tempdir(), "df2.csv"))
+icu.bayes.bf     <- update(icu.bayes,     diagnostic_file = file.path(tempdir(), "df1.csv"))
+icu.bayes.red.bf <- update(icu.bayes.red, diagnostic_file = file.path(tempdir(), "df2.csv"))
 
-icu.bayes.bridge    <- bridge_sampler(icu.bayes.bf)
-icu.bayes.BL.bridge <- bridge_sampler(icu.bayes.BL.bf)
+icu.bayes.bridge     <- bridge_sampler(icu.bayes.bf)
+icu.bayes.red.bridge <- bridge_sampler(icu.bayes.red.bf)
 ```
 
 ```{r}
-bf(icu.bayes.bridge, icu.bayes.BL.bridge)
+bf(icu.bayes.bridge, icu.bayes.red.bridge)
 ```
 
 There is overwhelming evidence in favor of the full model.
