@@ -2,7 +2,7 @@
 title:    "Bayesian statistics as a therapy for frequentist problems"
 subtitle: "Part 2: Bayes in action"
 author:   "Jorge N. Tendeiro"
-date:     "November 14, 2019<br><br> [https://rebrand.ly/Tendeiro_SHARE2](https://rebrand.ly/Tendeiro_SHARE2)"
+date:     "November 14, 2019<br><br> [https://jorgetendeiro.github.io/SHARE-UMCG-14-Nov-2019/Part2](https://jorgetendeiro.github.io/SHARE-UMCG-14-Nov-2019/Part2)"
 header-includes:
   - \usepackage{amsmath}
 output:   
@@ -23,7 +23,7 @@ bibliography: ../references.bib
 csl: ../style/apa-old-doi-prefix.csl
 ---
 
-<img src="qrplot.png" width="250" height="250" />
+<img src="qrplot.png" width="400" height="400" />
 
 <br><br>
 
@@ -261,7 +261,7 @@ summary(icu.bayes, digits = 3)
 
 **<span style="color:red">Important note:</span>** The function above relies on a *whole lot* of defaults (e.g., choice of priors, number of MCMC chains, burn-in period, etc. etc.). I decided to use all defaults to keep things simple: I want to focus on the end-product rather than on the model fitting intricacies. However, for more serious work, you are *strongly adviced* to think more carefully about the model fit and convergence.
 
-For more information on all this, you can start by reading some of the vignettes and blog posts that I added above. Provided you understand what I show below, the rest that you need to learn becomes much more accessible.
+For more information on all this, you can start by reading some of the vignettes and blog posts that I mentioned above. Provided you understand what I show below, the rest that you need to learn becomes much more accessible.
 
 ***
 
