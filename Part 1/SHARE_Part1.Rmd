@@ -194,7 +194,7 @@ knitr::include_graphics('figures/Gigerenzer p values.png')
 Try it!
 
 <center>
-[http://rebrand.ly/wdve2g](http://rebrand.ly/wdve2g){target="_blank"}
+[http://rebrand.ly/pvalue](http://rebrand.ly/pvalue){target="_blank"}
 </center>
 <br>
 
@@ -290,7 +290,7 @@ knitr::include_graphics('figures/Hoekstra2014 II.png')
 Try it!
 
 <center>
-[http://rebrand.ly/bxraj6](http://rebrand.ly/bxraj6){target="_blank"}
+[http://rebrand.ly/confint](http://rebrand.ly/confint){target="_blank"}
 </center>
 <br>
 
