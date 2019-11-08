@@ -41,7 +41,7 @@ knitr::include_graphics('figures/Baker 2016.jpeg')
 <span style="color:red">Fraud</span>
 <br><br>
 
-- Diederik Stapel, social psychologist. Suspended in 2011.
+- Diederik Stapel, social psychologist. Suspended in 2011. 
 <br>
 [Fabricating and manipulating data](https://www.nytimes.com/2013/04/28/magazine/diederik-stapels-audacious-academic-fraud.html?pagewanted=1&_r=0&src=recg).
 <br><br>
