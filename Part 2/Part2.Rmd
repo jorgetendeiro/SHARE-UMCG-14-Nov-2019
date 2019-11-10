@@ -31,13 +31,13 @@ csl: ../style/apa-old-doi-prefix.csl
 
 ## Bayes rule
 
-Say you have data $\mathcal{D}$, which you use to improve your understanding on the possible values of an unknown parameter $\theta$. For instance, $\theta$ can be the incidence rate of a particular medical condition in the population, and $\mathcal{D}$ the scores of a sample of patients on an indicator for that condition.
+Say you have data $\mathcal{D}$, which you use to improve your understanding on the possible values of an unknown parameter $\theta$. For instance, $\theta$ can be the proportion of obese men in a particular population, where male obesity is operationalized as [percentage of body fat (PBF) above 25%](https://en.wikipedia.org/wiki/Body_fat_percentage){target="_blank"}. Data $\mathcal{D}$ are the PBF scores for a sample of men from that population.
 
 Bayesian statistics works as follows:
 
 - Select a statistical model. The model conceptualizes how theory and data meet: It expresses, for any given value of the model parameter $\theta$, what the probability of *any* observed data is. This is denoted by $p(\mathcal{D}|\theta)$ (read: "probability of $\mathcal{D}$ conditional on a particular $\theta$ value") and often referred to as the *likelihood* function.
 
-- *Before looking at the data*, express your belief about the value of $\theta$ in the population. This 'belief' does not equate with the 'religious' kind of belief. Instead, it refers to an educated expression of one's knowledge about the world. For instance, suppose the medical condition in your study is very rare: All research thus far suggests that less than 1% of the population is affected by it. This knowledge can (and *should*!) be incorporated in the analysis. The *prior* distribution, denoted $p(\theta)$, does exactly this.
+- *Before looking at the data*, express your belief about the value of $\theta$ in the population. This 'belief' does not equate with the 'religious' kind of belief. Instead, it refers to an educated expression of one's knowledge about the world. For instance, it is possible that previous research found proportions of male obesity typically between .05 and .15. This knowledge can (and *should*!) be incorporated in the analysis. The *prior* distribution, denoted $p(\theta)$, does exactly this.
 
 - Collect your data.
 
@@ -65,6 +65,98 @@ $$
 where $\propto$ means "proportional to". 
 
 Therefore, the posterior distribution is basically a (rational, logically correct) means of merging together both our prior knowledged about some phenomenon with the information about the phenomenon that our data has to offer.
+
+## A small example
+
+Let's make things concrete. I downloaded data from [https://dasl.datadescription.com/datafile/bodyfat/](https://dasl.datadescription.com/datafile/bodyfat/){target="_blank"}, containing various measurements of 250 men. I focus on variable 'Pct.BF' (percentage of body fat) and dichotomize it (0 = PBF lower than 25%; 1 = PBF larger than 25%). 
+
+```{r message=FALSE}
+PBF.data <- read.csv(url("https://dasl.datadescription.com/download/data/3079"), 
+                     header = TRUE, sep = "\t")
+PBF      <- ifelse(PBF.data$Pct.BF > 25, 1, 0)
+head(PBF)
+length(PBF)
+prop.table(table(PBF))
+```
+
+Let's start by focusing on the data from the first 20 subjects in the sample. Suppose, rather unrealistically, that a priori all proportions of PBF values are equally likely in the population of obese men. Using the binomial model to account for the number of obese men in the sample, the three elements of Bayesian statistics (prior, likelihood, posterior) can be visualized as follows:
+
+```{r echo=FALSE, fig.height = 6}
+PBF.use <- PBF[1:20]
+a     <- 1
+b     <- 1
+obese <- sum(PBF.use == 1)
+N     <- length(PBF.use)
+ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
+            dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
+            max(dbeta(seq(0, 1, .001), a, b)))
+
+curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
+      n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
+      xlab = paste0("PBF (for N = ", N, ")"))
+curve(dbeta(x, a, b),
+      add = TRUE, n = 10001, col = " red")
+curve(dbeta(x, a + obese, b + (N - obese)), 
+      add = TRUE, n = 10001, col = "blue", lwd = 2)
+legend("topright", 
+       legend = c("Prior", "Likelihood", "Posterior"), 
+       col = c("red", "ForestGreen", "blue"), 
+       lwd = 2, bty = "n", seg.len = 5)
+text(x = .8, y = .7*ymax, paste0("median = ", round(qbeta(.5, a + obese, b + (N - obese)), 2)))
+LB <- round(qbeta(.025, a + obese, b + (N - obese)), 2)
+UB <- round(qbeta(.975, a + obese, b + (N - obese)), 2)
+text(x = .8, y = .6*ymax, paste0("95% cred int = (", LB, ", ", UB, ")"))
+polygon(x = c(seq(LB, UB, length.out = 100), seq(UB, LB, length.out = 100)), 
+        y = c(dbeta(c(seq(LB, UB, length.out = 100)), a + obese, b + (N - obese)), rep(0, 100)), 
+        col = rgb(0, 0, 1, .2), border = NA)
+```
+
+Observe that:
+
+- The red line is the prior and it expresses the fact that all PBF values are, a priori, equally likely.
+
+- The blue line is the posterior distribution. It reflects our updated knowledge about the PBF conditional on our model and data.
+
+- The likelihood (rescaled to unit area), in this case of a uniform prior, coincides with the posterior distribution.
+
+
+Let's improve the prior distribution. Suppose we expected, a priori, that the PBF would be [about 40%](https://en.wikipedia.org/wiki/Obesity_in_the_United_States){target="_blank"}. We can pick a prior which is somehow peaked around .4 and redo the computations:
+
+```{r echo=FALSE, fig.height = 6}
+PBF.use <- PBF[1:20]
+a     <- 40
+b     <- 60
+obese <- sum(PBF.use == 1)
+N     <- length(PBF.use)
+ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
+            dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
+            max(dbeta(seq(0, 1, .001), a, b)))
+
+curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
+      n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
+      xlab = paste0("PBF (for N = ", N, ")"))
+curve(dbeta(x, a, b),
+      add = TRUE, n = 10001, col = " red")
+curve(dbeta(x, a + obese, b + (N - obese)), 
+      add = TRUE, n = 10001, col = "blue", lwd = 2)
+legend("topright", 
+       legend = c("Prior", "Likelihood", "Posterior"), 
+       col = c("red", "ForestGreen", "blue"), 
+       lwd = 2, bty = "n", seg.len = 5)
+text(x = .8, y = .7*ymax, paste0("median = ", round(qbeta(.5, a + obese, b + (N - obese)), 2)))
+LB <- round(qbeta(.025, a + obese, b + (N - obese)), 2)
+UB <- round(qbeta(.975, a + obese, b + (N - obese)), 2)
+text(x = .8, y = .6*ymax, paste0("95% cred int = (", LB, ", ", UB, ")"))
+polygon(x = c(seq(LB, UB, length.out = 100), seq(UB, LB, length.out = 100)), 
+        y = c(dbeta(c(seq(LB, UB, length.out = 100)), a + obese, b + (N - obese)), rep(0, 100)), 
+        col = rgb(0, 0, 1, .2), border = NA)
+```
+
+The posterior distribution changed, *as it should*: Changes in the prior and/or likelihood will lead to changes in the posterior. Observe how the posterior distribution is a balance between the information in the data (the likelihood) and the information a prior (the prior). Bayesian statistics is all about rendering a compromise between these two sources.
+
+Now increase n.....
+
+
 
 ## Summary
 
@@ -242,7 +334,7 @@ segments(0, sensit, onemspec, sensit, col = 2)
 points(onemspec, sensit, pch = 21, bg = 2)
 ```
 
-The AUR is .85, so the predicted probability of non survival after hospital discharge is much larger for the patients who actually did not make it. So the model is working as intended.
+The AUC is .85, so the predicted probability of non survival after hospital discharge is much larger for the patients who actually did not make it. So the model is working as intended.
 
 ## Bayesian
 
@@ -429,7 +521,7 @@ for (i in 1:4)
     L.975        <- apply(postPD.logis, 1, function(vec) quantile(vec, probs = .975))
     
     points (age.vec, mean.logis, type = "l",  col = j+1)
-    polygon(c(age.vec, rev(age.vec)), c(L.025, rev(L.975)), col = adjustcolor(j+1, .05), border = NA)
+    polygon(c(age.vec, rev(age.vec)), c(L.025, rev(L.975)), col = adjustcolor(j+1, .10), border = NA)
     
     if (i==1) mtext("cancer = No" , 3, .5, cex = 1.2)
     if (i==3) mtext("cancer = Yes", 3, .5, cex = 1.2)
