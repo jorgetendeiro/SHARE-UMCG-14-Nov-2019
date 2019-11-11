@@ -113,14 +113,14 @@ polygon(x = c(seq(LB, UB, length.out = 100), seq(UB, LB, length.out = 100)),
 
 Observe that:
 
-- The red line is the prior and it expresses the fact that all proportions are, a priori, equally likely.
+- The prior expresses the fact that all proportions are equally likely, before taking the data into account.
 
-- The blue line is the posterior distribution. It reflects our updated knowledge about the population proportion, conditional on our model and data.
+- The posterior distribution expresses our updated knowledge about the population proportion, conditional on our model and data.
 
-- The likelihood (rescaled to unit area) coincides with the posterior distribution (in this case of a uniform prior), and that is why it appears to be missing.
+- The likelihood (rescaled to unit area) coincides with the posterior distribution in this case of a uniform prior, and that is why it appears to be missing.
 
 
-Let's improve the prior distribution. Suppose we expected, a priori, that the proportion of obese men in the population would be [about 40%](https://en.wikipedia.org/wiki/Obesity_in_the_United_States){target="_blank"}. We can pick a prior which is somehow peaked around .4 and redo the computations:
+Let's improve the prior distribution. Suppose we expected, a priori, that the proportion of obese men in the population would be [about 40%](https://en.wikipedia.org/wiki/Obesity_in_the_United_States){target="_blank"}. We can pick a prior which peakes around .4 and redo the computations:
 
 ```{r echo=FALSE, fig.height = 6}
 PBF.use <- PBF[1:20]
@@ -152,9 +152,9 @@ polygon(x = c(seq(LB, UB, length.out = 100), seq(UB, LB, length.out = 100)),
         col = rgb(0, 0, 1, .2), border = NA)
 ```
 
-The posterior distribution changed, *as it should*: Changes in the prior and/or likelihood will lead to changes in the posterior. Observe how the posterior distribution is a balance between the information in the data (the likelihood) and the information a prior (the prior). Bayesian statistics is all about rendering a compromise between these two sources.
+The posterior distribution changed, *as it should*: Changes in the prior and/or likelihood will lead to changes in the posterior. Observe how the posterior distribution is a balance between the information in the data (the likelihood) and the information a priori (the prior). Bayesian statistics is all about rendering a compromise between these two sources.
 
-Above I displayed two estimated model, rendering two rather different versions of updated knowledge about the proportion of obesity. The data are the same, yet the conclusions differ... This reflects uncertainty related to the model. What happens if we have more data? Let's reproduce the two previous plots, this time using the scores of all 250 men in the sample:
+Above I displayed two estimated models, rendering two rather different versions of updated knowledge about the proportion of obesity. The data are the same, yet the conclusions differ... This reflects uncertainty related to the model. What happens if we have more data? Let's reproduce the two previous plots, this time using the scores of all 250 men in the sample:
 
 ```{r echo=FALSE, message=FALSE, fig.height = 6}
 par(mar = c(4, 6.5, 2.5, 1))
@@ -234,6 +234,7 @@ ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x
             max(dbeta(seq(0, 1, .001), a, b)))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
+      xlim = c(.1, .6), 
       n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
       xlab = paste0("Proportion obesity (for N = ", N, ")"))
 curve(dbeta(x, a, b),
@@ -261,6 +262,7 @@ ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x
             max(dbeta(seq(0, 1, .001), a, b)))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
+      xlim = c(.1, .6), 
       n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
       xlab = paste0("Proportion obesity (for N = ", N, ")"))
 curve(dbeta(x, a, b),
