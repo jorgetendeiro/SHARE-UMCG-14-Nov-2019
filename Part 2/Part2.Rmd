@@ -372,7 +372,7 @@ The odds ratio:
 round(exp(cbind(coef(icu.freq), confint(icu.freq))), 2) # ignore intercept
 ```
 
-So, for instance, the odds of not making it after hospital discharge increase by about `r round(exp(coef(icu.freq)["cancerYes"]), 0)` times for cancer patients. 
+So, for instance, the odds of not making it after hospital discharge increase by about `r round(exp(coef(icu.freq)["cancerYes"]), 0)` times for cancer patients (but see the CI...).
 
 Plot the estimated probability against the jittered outcome:
 ```{r message=FALSE, fig.height = 6}
@@ -564,7 +564,7 @@ median(OR.cancer)                                # median
 quantile(OR.cancer, probs = c(.025, .975))       # 95% credible interval
 ```
 
-What is the probaiblity of the odds ratio being larger than 1?
+What is the probability of the odds ratio being larger than 1?
 
 ```{r}
 mean(OR.cancer > 1)
