@@ -366,6 +366,14 @@ icu.freq <- glm(died   ~ age + cancer + admit + uncons,
 summary(icu.freq)
 ```
 
+The odds ratio:
+
+```{r message=FALSE}
+round(exp(cbind(coef(icu.freq), confint(icu.freq))), 2) # ignore intercept
+```
+
+So, for instance, the odds of not making it after hospital discharge increase by about `r round(exp(coef(icu.freq)["cancerYes"]), 0)` times for cancer patients. 
+
 Plot the estimated probability against the jittered outcome:
 ```{r message=FALSE, fig.height = 6}
 est.prob <- predict(icu.freq, type = c("response"))
@@ -496,7 +504,6 @@ plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, pars = c("age")) +
   geom_vline(xintercept = 0)
 ```
 
-
 # Compare results
 
 ## Point estimates
@@ -530,6 +537,8 @@ The numerical estimates look very close... So, why should we bother using Bayesi
 
 - First of all, the *interpretation* of the results is different. For instance, note that confidence interval $\not=$ credible interval (the latter is *much* more intuitive). 
 
+- Bayesian statistics allows answering questions about parameters *directly*. Some examples will be shown below.
+
 - Bayesian statistics is very flexible (e.g., relatively easy to adapt model, priors, constraints).
 
 - Also, Bayesian modeling allows really cool model assessment. Below we will highlight the following:
@@ -539,6 +548,27 @@ The numerical estimates look very close... So, why should we bother using Bayesi
     - *Posterior predictive distribution*: How does data generated from the estimated model relate to your observed data? This also works for out-of-sample observed data.
     
     - *Model comparisons*: How to decide between competing models?
+
+# Inferences for parameters
+
+For instance, how can we summarize the results of the odds ratio for cancer?
+
+```{r fig.height=6}
+plot(icu.bayes, "areas", prob = 0.95, prob_outer = 1, pars = c("cancerYes"), 
+     transformations = list(cancerYes = exp))
+
+# Extract samples from posterior:
+cancer.MCMC <- as.data.frame(icu.bayes)$cancerYes
+OR.cancer   <- exp(cancer.MCMC)                  # odds ratio
+median(OR.cancer)                                # median
+quantile(OR.cancer, probs = c(.025, .975))       # 95% credible interval
+```
+
+What is the probaiblity of the odds ratio being larger than 1?
+
+```{r}
+mean(OR.cancer > 1)
+```
 
 # Prior predictive distribution
 
