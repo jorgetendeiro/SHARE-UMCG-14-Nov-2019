@@ -98,7 +98,6 @@ knitr::include_graphics('figures/Baker 2016.jpeg')
 @bem2004
 </section>
 
-
 This is not OK *unless* the exploration is explicity stated.
 
 ## Causes for the crisis? {.scrollable}
@@ -202,48 +201,6 @@ Try it!
 knitr::include_graphics('figures/QR code - pvalues.png')
 ```
 
-<!-- Poll here: http://www.polljunkie.com/poll/yezkij/what-is-a-p-value/admin -->
-<!-- Shorter: https://rebrand.ly/pvalue -->
-<!-- Available only until 31 August 2019 -->
-
-<!-- ## Results -->
-<!-- **All** statements are <span style="color:red">incorrect</span>. -->
-
-## Results
-But how did students and teachers perceive these statements?
-
-```{r, fig.align = 'center', out.width='40%', echo = FALSE}
-knitr::include_graphics('figures/Gigerenzer p values 2.png')
-```
-
-This was in 2004. But things did not improve since...
-
-## Goodman (2008)
-
-```{r, fig.align = 'center', out.width='60%', echo = FALSE}
-knitr::include_graphics('figures/Goodman.png')
-```
-<br>
-
-```{r, fig.align = 'center', out.width='85%', echo = FALSE}
-knitr::include_graphics('figures/Goodman2.png')
-```
-
-## Greenland et al. (2016)
-
-```{r, fig.align = 'center', out.width='80%', echo = FALSE}
-knitr::include_graphics('figures/Greenland.png')
-```
-
-<br><br><br>
-
-This paper expands @goodman2008 and elaborates on <span style="color:red">25 misinterpretations</span>.
-
-## *The American Statistician* (2019)
-Special issue with 43 (!!) papers [@wasserstein2019].
-
-<p align="center"><span style="color:red">Moving to a world beyond "$p<.05$"</span></p>
-
 ## Confidence intervals
 
 ## A better alternative?
@@ -298,14 +255,44 @@ Try it!
 knitr::include_graphics('figures/QR code - CIs.png')
 ```
 
-<!-- Poll here: http://www.polljunkie.com/poll/ykmrid/what-is-a-confidence-interval-hoekstra-et-al-2014 -->
-<!-- Shorter: https://rebrand.ly/confint -->
-<!-- Available only until 31 August 2019 -->
-
-<!-- ## Results -->
-<!-- **All** statements are <span style="color:red">incorrect</span>. -->
+## $p$ values -- Results
 
 ## Results
+But how did students and teachers perceive these statements?
+
+```{r, fig.align = 'center', out.width='40%', echo = FALSE}
+knitr::include_graphics('figures/Gigerenzer p values 2.png')
+```
+
+This was in 2004. But things did not improve since...
+
+## Goodman (2008)
+
+```{r, fig.align = 'center', out.width='60%', echo = FALSE}
+knitr::include_graphics('figures/Goodman.png')
+```
+<br>
+
+```{r, fig.align = 'center', out.width='85%', echo = FALSE}
+knitr::include_graphics('figures/Goodman2.png')
+```
+
+## Greenland et al. (2016)
+
+```{r, fig.align = 'center', out.width='80%', echo = FALSE}
+knitr::include_graphics('figures/Greenland.png')
+```
+
+<br><br><br>
+
+This paper expands @goodman2008 and elaborates on <span style="color:red">25 misinterpretations</span>.
+
+## *The American Statistician* (2019)
+Special issue with 43 (!!) papers [@wasserstein2019].
+
+<p align="center"><span style="color:red">Moving to a world beyond "$p<.05$"</span></p>
+
+## Confidence intervals -- Results
 But how did students and teachers perceive these statements?
 
 ```{r, fig.align = 'center', out.width='55%', echo = FALSE}
@@ -324,8 +311,6 @@ Remember this when interpreting <span style="color:red">Bayesian credible interv
 
 For completeness, not everyone agrees with the Hoekstra study [@garcia-perez2016; @miller2016; see also a reply by @morey2016]. Also the very same authors of the Hoesktra study [@morey2019]!
 
-
 # References 
 ##  {.scrollable}
 ----
-
