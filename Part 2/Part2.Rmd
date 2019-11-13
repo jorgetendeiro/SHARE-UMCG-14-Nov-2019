@@ -37,7 +37,7 @@ Bayesian statistics works as follows:
 
 - Select a statistical model. The model conceptualizes how theory and data meet: It expresses, for any given value of the model parameter $\theta$, what the probability of *any* observed data is. This is denoted by $p(\mathcal{D}|\theta)$ (read: "probability of $\mathcal{D}$ conditional on a particular $\theta$ value") and often referred to as the *likelihood* function.
 
-- *Before looking at the data*, express your belief about the value of $\theta$ in the population. This 'belief' does not equate with the 'religious' kind of belief. Instead, it refers to an educated expression of one's knowledge about the world. For instance, it is possible that previous research found proportions of male obesity typically between .05 and .15. This knowledge can (and *should*!) be incorporated in the analysis. The *prior* distribution, denoted $p(\theta)$, does exactly this.
+- *Before looking at the data*, express your belief about the value of $\theta$ in the population. This 'belief' does not equate with the 'religious' kind of belief. Instead, it refers to an educated expression of one's knowledge about the world. For instance, it is possible that previous research found proportions of male obesity typically between .15 and .30. This knowledge can (and *should*!) be incorporated in the analysis. The *prior* distribution, denoted $p(\theta)$, does exactly this.
 
 - Collect your data.
 
@@ -64,7 +64,7 @@ $$
 $$
 where $\propto$ means "proportional to". 
 
-Therefore, the posterior distribution is basically a (rational, logically correct) means of merging together both our prior knowledged about some phenomenon with the information about the phenomenon that our data has to offer.
+Therefore, the posterior distribution is basically a (rational, logically correct) means of merging together both our prior knowledge about some phenomenon with the information about the phenomenon that our data has to offer.
 
 ## A small example
 
@@ -89,7 +89,7 @@ obese <- sum(PBF.use == 1)
 N     <- length(PBF.use)
 ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
             dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
-            max(dbeta(seq(0, 1, .001), a, b)))
+            dbeta(seq(0, 1, .001), a, b))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
       n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
@@ -130,7 +130,7 @@ obese <- sum(PBF.use == 1)
 N     <- length(PBF.use)
 ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
             dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
-            max(dbeta(seq(0, 1, .001), a, b)))
+            dbeta(seq(0, 1, .001), a, b))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
       n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
@@ -167,7 +167,7 @@ obese <- sum(PBF.use == 1)
 N     <- length(PBF.use)
 ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
             dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
-            max(dbeta(seq(0, 1, .001), a, b)))
+            dbeta(seq(0, 1, .001), a, b))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
       n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
@@ -195,7 +195,7 @@ obese <- sum(PBF.use == 1)
 N     <- length(PBF.use)
 ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
             dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
-            max(dbeta(seq(0, 1, .001), a, b)))
+            dbeta(seq(0, 1, .001), a, b))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
       n = 10001, bty = "n", las = 1, col = "ForestGreen", yaxt = "n", ylab = "", yaxs = "i", 
@@ -231,7 +231,7 @@ obese <- sum(PBF.use == 1)
 N     <- length(PBF.use)
 ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
             dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
-            max(dbeta(seq(0, 1, .001), a, b)))
+            dbeta(seq(0, 1, .001), a, b))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
       xlim = c(.1, .6), 
@@ -259,7 +259,7 @@ obese <- sum(PBF.use == 1)
 N     <- length(PBF.use)
 ymax <- max(dbinom(obese, N, obese/N) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, 
             dbeta(seq(0, 1, .001), a + obese, b + (N - obese)), 
-            max(dbeta(seq(0, 1, .001), a, b)))
+            dbeta(seq(0, 1, .001), a, b))
 
 curve(dbinom(obese, N, x) / integrate(function(x) dbinom(obese, N, x), 0, 1)$value, ylim = c(0, ceiling(ymax)), 
       xlim = c(.1, .6), 
@@ -285,13 +285,13 @@ Bayesian statistics allows you to rationally update your knowledge about a pheno
 - a prior belief;
 - data.
 
-Any person with the same set of 3 ingredients will update his/her knowledge in the same way (that is what I mean by *rational* update). "The" unique way of updating our knowledge is given by the Bayes rule. This rule, by the way, is universal and accepted by frequentists and Bayesians alike (it is mathematically based on axioms). The Bayes rule is a mathematical necessity. Not accepting the Bayes rule is not accepting the basic axioms of probability.
+Any person with the same set of 3 ingredients will update his/her knowledge in the same way. Also, persons with different priors use the same mechanism to update their belief (that is what I mean by *rational* update). "This" unique mechanism used to update our knowledge is given by the Bayes rule. The Bayes rule, by the way, is universal and accepted by frequentists and Bayesians alike (it is mathematically based on axioms). The Bayes rule is a mathematical necessity. Not accepting the Bayes rule is not accepting the basic axioms of probability.
 
 One of the advantages of Bayesian statistics is that it allows answering questions *directly*. This is in contrast with the questions that can be answered by means of frequentist statistics, for which uncertainty pertains to repeated sampling from the population ('If we sample over and over from the population, what can be said about...?').
 
 # Set up
 
-I will illustrate how to perform Bayesian estimation with a simple example. To make the contrast with the frequentist analysis clearer, I will fit the same model in the classic way too. This way, we can better compare the two paradigms. R will be the statistical software used.
+I will illustrate how to perform Bayesian estimation with a simple example. To make the contrast with the frequentist analysis clearer, I will fit the same model in the classic way too. This way, we can better compare the two paradigms. R will be the statistical software used. In what follows, I will *not* focus on the R code. Instead, I will focus on the concepts and outputs.
 
 The empirical data are a sample from the classical 'Intensive Care Unit' (ICU) data set [@hosmer2013; @lemeshow1988a]. This sample is freely available from the [vcdExtra](https://cran.r-project.org/web/packages/vcdExtra/index.html){target="_blank"} R package [@friendly2017a]. I will be fitting a logistic regression model which tries to predict the survival of adult patients following hospital discharge.
 
@@ -771,7 +771,7 @@ legend(.5, .3, c("ROC (Freq)",
        lwd = c(2, .5, 3), seg.len = 4, col = c("black", "gray", "blue"), cex = .8)
 ```
 
-So we learned something by inspecting the posterior predictive distribution. Perhaps we should consider refitting the model, this time adding a constraint for the age effect (would that be theoretically sensible?).
+So we learned something by inspecting the posterior predictive distribution. Perhaps we should consider refitting the model, this time adding a constraint for the age effect (would that be theoretically sensible, though?).
 
 Here's the posterior distribution for the AUC:
 
